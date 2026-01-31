@@ -168,14 +168,17 @@ const updateHeatingUI = () => {
     }
 };
 
-document.getElementById('btn-toggle-heating-topbar').addEventListener('click', () => {
-    heatingOn = !heatingOn;
-    storage.set('heatingOn', heatingOn);
-    heatingEvents.push({ date: new Date().toISOString(), type: heatingOn ? 'on' : 'off' });
-    storage.set('heatingEvents', heatingEvents);
-    updateHeatingUI();
-    showToast(heatingOn ? 'Riscaldamento acceso' : 'Riscaldamento spento');
-});
+const heatingToggleBtn = document.getElementById('btn-toggle-heating-topbar');
+if (heatingToggleBtn) {
+    heatingToggleBtn.addEventListener('click', () => {
+        heatingOn = !heatingOn;
+        storage.set('heatingOn', heatingOn);
+        heatingEvents.push({ date: new Date().toISOString(), type: heatingOn ? 'on' : 'off' });
+        storage.set('heatingEvents', heatingEvents);
+        updateHeatingUI();
+        showToast(heatingOn ? 'Riscaldamento acceso' : 'Riscaldamento spento');
+    });
+}
 
 // Calculate consumption between readings
 const calcConsumo = (lettura, prevLettura) => {
