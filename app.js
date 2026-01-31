@@ -475,7 +475,9 @@ const generateDailyStimaLine = async (stagione) => {
 };
 
 // Render Calendar View
-const renderCalendario = () => {
+let selectedCalendarioYear = new Date().getFullYear();
+
+const renderCalendario = (year = selectedCalendarioYear) => {
     const container = document.getElementById('calendario-container');
     if (!container) return;
 
@@ -490,29 +492,16 @@ const renderCalendario = () => {
         readingsByDate[l.data] = { stagione, color: getStagioneColor(stagione) };
     });
 
-    // Determine the years to show based on selected seasons
-    const yearsToShow = new Set();
-    selectedAnni.forEach(stagione => {
-        // Extract years from stagione (e.g., "24-25" -> 2024, 2025)
-        const match = stagione.match(/(\d{2})-(\d{2})/);
-        if (match) {
-            yearsToShow.add(2000 + parseInt(match[1]));
-            yearsToShow.add(2000 + parseInt(match[2]));
-        }
-    });
-
-    // Default to current year if no years selected
-    if (yearsToShow.size === 0) {
-        yearsToShow.add(new Date().getFullYear());
-    }
-
-    const sortedYears = [...yearsToShow].sort((a, b) => b - a);
     const today = new Date().toISOString().split('T')[0];
 
-    // Build legend
+    // Build legend - show all seasons that have readings in this year
     const legendColors = {};
-    selectedAnni.forEach(stagione => {
-        legendColors[stagione] = getStagioneColor(stagione);
+    letture.forEach(l => {
+        const lYear = new Date(l.data).getFullYear();
+        if (lYear === year) {
+            const stagione = l.stagione || getStagione(l.data);
+            legendColors[stagione] = getStagioneColor(stagione);
+        }
     });
 
     let html = `<div class="calendario-legend">
@@ -525,58 +514,82 @@ const renderCalendario = () => {
     ).join('')}
     </div>`;
 
-    // Build calendars for each year
-    for (const year of sortedYears) {
-        html += `<h3 style="margin: 20px 0 12px; font-size: 1.1rem; color: var(--text-primary);">${year}</h3>`;
-        html += '<div class="calendario-grid">';
+    // Build calendar for the selected year
+    html += '<div class="calendario-grid">';
 
-        for (let month = 0; month < 12; month++) {
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
+    for (let month = 0; month < 12; month++) {
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
 
-            // Get day of week for first day (0 = Sunday, convert to Monday-based)
-            let startDay = firstDay.getDay();
-            startDay = startDay === 0 ? 6 : startDay - 1; // Convert to Monday = 0
+        // Get day of week for first day (0 = Sunday, convert to Monday-based)
+        let startDay = firstDay.getDay();
+        startDay = startDay === 0 ? 6 : startDay - 1; // Convert to Monday = 0
 
-            html += `
-            <div class="calendario-month">
-                <div class="calendario-month-header">${monthNames[month]}</div>
-                <div class="calendario-weekdays">
-                    ${weekDays.map(d => `<div class="calendario-weekday">${d}</div>`).join('')}
-                </div>
-                <div class="calendario-days">`;
+        html += `
+        <div class="calendario-month">
+            <div class="calendario-month-header">${monthNames[month]}</div>
+            <div class="calendario-weekdays">
+                ${weekDays.map(d => `<div class="calendario-weekday">${d}</div>`).join('')}
+            </div>
+            <div class="calendario-days">`;
 
-            // Empty cells before first day
-            for (let i = 0; i < startDay; i++) {
-                html += '<div class="calendario-day empty"></div>';
-            }
-
-            // Days of the month
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const reading = readingsByDate[dateStr];
-                const isToday = dateStr === today;
-
-                let classes = 'calendario-day';
-                if (isToday) classes += ' today';
-                if (reading) classes += ' has-reading';
-
-                html += `<div class="${classes}">`;
-                if (reading) {
-                    html += `<div class="reading-dot" style="background: ${reading.color}"></div>`;
-                }
-                html += `${day}</div>`;
-            }
-
-            html += '</div></div>';
+        // Empty cells before first day
+        for (let i = 0; i < startDay; i++) {
+            html += '<div class="calendario-day empty"></div>';
         }
 
-        html += '</div>';
+        // Days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const reading = readingsByDate[dateStr];
+            const isToday = dateStr === today;
+
+            let classes = 'calendario-day';
+            if (isToday) classes += ' today';
+            if (reading) classes += ' has-reading';
+
+            html += `<div class="${classes}">`;
+            if (reading) {
+                html += `<div class="reading-dot" style="background: ${reading.color}"></div>`;
+            }
+            html += `${day}</div>`;
+        }
+
+        html += '</div></div>';
     }
 
+    html += '</div>';
     container.innerHTML = html;
 };
+
+// Populate calendar year selector
+const populateCalendarioYearSelector = () => {
+    const select = document.getElementById('calendario-anno-select');
+    if (!select) return;
+
+    // Get all years from letture
+    const years = new Set();
+    letture.forEach(l => {
+        years.add(new Date(l.data).getFullYear());
+    });
+
+    // Add current year if not present
+    years.add(new Date().getFullYear());
+
+    const sortedYears = [...years].sort((a, b) => b - a);
+
+    select.innerHTML = sortedYears.map(y =>
+        `<option value="${y}" ${y === selectedCalendarioYear ? 'selected' : ''}>${y}</option>`
+    ).join('');
+};
+
+// Calendar year change handler
+document.getElementById('calendario-anno-select')?.addEventListener('change', (e) => {
+    selectedCalendarioYear = parseInt(e.target.value);
+    renderCalendario(selectedCalendarioYear);
+});
+
 
 const updateChart = async () => {
     const ctx = document.getElementById('chart-main').getContext('2d');
@@ -586,16 +599,21 @@ const updateChart = async () => {
     const climaSelector = document.getElementById('clima-anno-selector');
     climaSelector.style.display = currentChartType === 'clima' ? 'block' : 'none';
 
+    // Show/hide calendario selector
+    const calendarioSelector = document.getElementById('calendario-anno-selector');
+    calendarioSelector.style.display = currentChartType === 'calendario' ? 'block' : 'none';
+
     // Show/hide canvas vs calendario
     const canvas = document.getElementById('chart-main');
     const calendarioContainer = document.getElementById('calendario-container');
     if (currentChartType === 'calendario') {
         canvas.style.display = 'none';
         calendarioContainer.style.display = 'block';
-        renderCalendario();
-        // Update stats for calendario
-        const filtered = letture.filter(l => selectedAnni.includes(l.stagione || getStagione(l.data)));
-        document.getElementById('stat-letture').textContent = filtered.length;
+        populateCalendarioYearSelector();
+        renderCalendario(selectedCalendarioYear);
+        // Update stats for calendario - count readings in selected year
+        const yearReadings = letture.filter(l => new Date(l.data).getFullYear() === selectedCalendarioYear);
+        document.getElementById('stat-letture').textContent = yearReadings.length;
         document.getElementById('stat-totale').textContent = '-';
         document.getElementById('stat-media').textContent = '-';
         return;
