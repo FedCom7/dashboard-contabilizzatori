@@ -474,6 +474,110 @@ const generateDailyStimaLine = async (stagione) => {
     return dailyData;
 };
 
+// Render Calendar View
+const renderCalendario = () => {
+    const container = document.getElementById('calendario-container');
+    if (!container) return;
+
+    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+    const weekDays = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+
+    // Get readings by date for quick lookup
+    const readingsByDate = {};
+    letture.forEach(l => {
+        const stagione = l.stagione || getStagione(l.data);
+        readingsByDate[l.data] = { stagione, color: getStagioneColor(stagione) };
+    });
+
+    // Determine the years to show based on selected seasons
+    const yearsToShow = new Set();
+    selectedAnni.forEach(stagione => {
+        // Extract years from stagione (e.g., "24-25" -> 2024, 2025)
+        const match = stagione.match(/(\d{2})-(\d{2})/);
+        if (match) {
+            yearsToShow.add(2000 + parseInt(match[1]));
+            yearsToShow.add(2000 + parseInt(match[2]));
+        }
+    });
+
+    // Default to current year if no years selected
+    if (yearsToShow.size === 0) {
+        yearsToShow.add(new Date().getFullYear());
+    }
+
+    const sortedYears = [...yearsToShow].sort((a, b) => b - a);
+    const today = new Date().toISOString().split('T')[0];
+
+    // Build legend
+    const legendColors = {};
+    selectedAnni.forEach(stagione => {
+        legendColors[stagione] = getStagioneColor(stagione);
+    });
+
+    let html = `<div class="calendario-legend">
+        <span style="font-weight: 600; margin-right: 8px;">Legenda:</span>
+        ${Object.entries(legendColors).map(([stagione, color]) =>
+        `<div class="legend-item">
+                <div class="legend-dot" style="background: ${color}"></div>
+                <span>${stagione}</span>
+            </div>`
+    ).join('')}
+    </div>`;
+
+    // Build calendars for each year
+    for (const year of sortedYears) {
+        html += `<h3 style="margin: 20px 0 12px; font-size: 1.1rem; color: var(--text-primary);">${year}</h3>`;
+        html += '<div class="calendario-grid">';
+
+        for (let month = 0; month < 12; month++) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+
+            // Get day of week for first day (0 = Sunday, convert to Monday-based)
+            let startDay = firstDay.getDay();
+            startDay = startDay === 0 ? 6 : startDay - 1; // Convert to Monday = 0
+
+            html += `
+            <div class="calendario-month">
+                <div class="calendario-month-header">${monthNames[month]}</div>
+                <div class="calendario-weekdays">
+                    ${weekDays.map(d => `<div class="calendario-weekday">${d}</div>`).join('')}
+                </div>
+                <div class="calendario-days">`;
+
+            // Empty cells before first day
+            for (let i = 0; i < startDay; i++) {
+                html += '<div class="calendario-day empty"></div>';
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const reading = readingsByDate[dateStr];
+                const isToday = dateStr === today;
+
+                let classes = 'calendario-day';
+                if (isToday) classes += ' today';
+                if (reading) classes += ' has-reading';
+
+                html += `<div class="${classes}">`;
+                if (reading) {
+                    html += `<div class="reading-dot" style="background: ${reading.color}"></div>`;
+                }
+                html += `${day}</div>`;
+            }
+
+            html += '</div></div>';
+        }
+
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
+};
+
 const updateChart = async () => {
     const ctx = document.getElementById('chart-main').getContext('2d');
     if (mainChart) mainChart.destroy();
@@ -481,6 +585,24 @@ const updateChart = async () => {
     // Show/hide clima selector
     const climaSelector = document.getElementById('clima-anno-selector');
     climaSelector.style.display = currentChartType === 'clima' ? 'block' : 'none';
+
+    // Show/hide canvas vs calendario
+    const canvas = document.getElementById('chart-main');
+    const calendarioContainer = document.getElementById('calendario-container');
+    if (currentChartType === 'calendario') {
+        canvas.style.display = 'none';
+        calendarioContainer.style.display = 'block';
+        renderCalendario();
+        // Update stats for calendario
+        const filtered = letture.filter(l => selectedAnni.includes(l.stagione || getStagione(l.data)));
+        document.getElementById('stat-letture').textContent = filtered.length;
+        document.getElementById('stat-totale').textContent = '-';
+        document.getElementById('stat-media').textContent = '-';
+        return;
+    } else {
+        canvas.style.display = 'block';
+        calendarioContainer.style.display = 'none';
+    }
 
     const filtered = letture.filter(l => selectedAnni.includes(l.stagione || getStagione(l.data)));
     if (filtered.length === 0) {

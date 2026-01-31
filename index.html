@@ -59,6 +59,7 @@
                                 <button class="filter-btn" data-chart-type="clima">🌡️ Clima</button>
                                 <button class="filter-btn" data-chart-type="stima-giornaliera">📈 Stima
                                     Giornaliera</button>
+                                <button class="filter-btn" data-chart-type="calendario">📅 Calendario</button>
                             </div>
                             <div id="clima-anno-selector" style="margin-top: 12px; display: none;">
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Anno Clima:</label>
@@ -107,6 +108,10 @@
                             </div>
                             <div class="chart-wrapper">
                                 <canvas id="chart-main"></canvas>
+                                <!-- Calendario View -->
+                                <div id="calendario-container"
+                                    style="display: none; padding: 20px; overflow-y: auto; height: 100%;">
+                                </div>
                             </div>
                         </div>
 
