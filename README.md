@@ -37,7 +37,3 @@ Per eseguire il progetto in locale con il server API (opzionale):
 
 - `letture.json`: Database utilizzato dal server Node.js locale.
 - `data.js`: Fallback statico per l'utilizzo senza server (es. GitHub Pages).
-# dashboard-contabilizzatori
-# dashboard-contabilizzatori
-# dashboard-contabilizzatori
-# dashboard-contabilizzatori

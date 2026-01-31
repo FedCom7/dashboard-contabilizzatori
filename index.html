@@ -382,6 +382,13 @@
                             <button class="btn-secondary" id="btn-pulisci-cache-meteo">Pulisci Cache</button>
                         </div>
                     </div>
+                    <div class="settings-section">
+                        <h4>☁️ Cloud Sync</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                            Sincronizza manualmente i dati locali con Firebase
+                        </p>
+                        <button class="btn-primary btn-full" id="btn-sync-firebase">Sincronizza ora</button>
+                    </div>
                     <div class="settings-section danger">
                         <h4>Zona Pericolosa</h4>
                         <p>Elimina tutti i dati salvati</p>
@@ -475,6 +482,10 @@
 
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
+
+    <!-- Firebase Integration -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="firebase-service.js"></script>
 
     <script src="data.js"></script>
     <script src="app.js"></script>

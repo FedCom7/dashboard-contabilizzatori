@@ -87,7 +87,21 @@ const saveToServer = async () => {
 const saveLetture = async () => {
     storage.set('letture', letture);
     await saveToServer();
+
+    // Firebase Sync (Save All / Update)
+    if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+        try {
+            // Salva tutte le letture presenti
+            // Nota: per 100-200 letture è accettabile, per migliaia servirebbe logica diff
+            const promises = letture.map(l => window.FirebaseService.saveLettura(l));
+            await Promise.all(promises);
+        } catch (e) {
+            console.warn('Errore salvataggio Firebase:', e);
+        }
+    }
 };
+
+
 
 // State
 let letture = storage.get('letture', []);
@@ -891,8 +905,17 @@ const renderTable = () => {
     tbody.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (confirm('Eliminare questa lettura?')) {
-                letture.splice(parseInt(btn.dataset.idx), 1);
+                const idx = parseInt(btn.dataset.idx);
+                const deletedItem = letture[idx];
+
+                letture.splice(idx, 1);
                 await saveLetture();
+
+                // Elimina da Firebase
+                if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                    await window.FirebaseService.deleteLettura(deletedItem.data);
+                }
+
                 renderTable();
                 updateChart();
                 updateWidgets();
@@ -966,7 +989,40 @@ document.getElementById('btn-esporta-json').addEventListener('click', () => {
     a.click();
 });
 
+// Manual Sync Handler
+document.getElementById('btn-sync-firebase').addEventListener('click', async () => {
+    if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
+        showToast('Firebase non configurato o non inizializzato', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-sync-firebase');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Sincronizzazione...';
+    btn.disabled = true;
+
+    try {
+        // Sync Letture
+        const promises = letture.map(l => window.FirebaseService.saveLettura(l));
+        await Promise.all(promises);
+
+        // Sync Heating Periods
+        const hpPromises = heatingPeriods.map(p => window.FirebaseService.saveHeatingPeriod(p));
+        await Promise.all(hpPromises);
+
+        showToast(`Sincronizzati ${letture.length} letture e ${heatingPeriods.length} periodi`);
+    } catch (e) {
+        console.error(e);
+        showToast('Errore durante la sincronizzazione', 'error');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+});
+
 // Heating History Modal
+
+
 document.getElementById('btn-heating-history').addEventListener('click', () => {
     document.getElementById('modal-heating').classList.add('show');
     renderHeatingHistory();
@@ -1157,10 +1213,18 @@ const renderHeatingPeriods = () => {
 
     // Delete handlers
     list.querySelectorAll('.btn-delete-period').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const idx = parseInt(btn.dataset.idx);
+            const deleted = heatingPeriods[idx];
+
             heatingPeriods.splice(idx, 1);
             storage.set('heatingPeriods', heatingPeriods);
+
+            // Elimina da Firebase
+            if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                await window.FirebaseService.deleteHeatingPeriod(deleted.start);
+            }
+
             renderHeatingPeriods();
             renderScatterChart();
             renderTable();
@@ -1186,12 +1250,18 @@ if (addHeatingPeriodBtn) {
             return;
         }
 
-        heatingPeriods.push({
+        const newPeriod = {
             start: startInput.value,
             end: endInput.value
-        });
+        };
+        heatingPeriods.push(newPeriod);
 
         storage.set('heatingPeriods', heatingPeriods);
+
+        // Salva su Firebase
+        if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+            await window.FirebaseService.saveHeatingPeriod(newPeriod);
+        }
         startInput.value = '';
         endInput.value = '';
         renderHeatingPeriods();
@@ -1335,34 +1405,61 @@ const renderScatterChart = () => {
 // Initialize
 const init = async () => {
     updateHeatingUI();
+    let loadedFromFirebase = false;
 
-    // Carica da API server, poi localStorage, poi dati inline
-    try {
-        const response = await fetch(API_URL);
-        if (response.ok) {
-            const data = await response.json();
-            if (data.length > 0) {
-                letture = data;
+    // 1. Prova a caricare da Firebase
+    if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+        try {
+            const fbData = await window.FirebaseService.getLetture();
+            console.log('Firebase data:', fbData);
+            if (fbData && fbData.length > 0) {
+                letture = fbData;
                 storage.set('letture', letture);
-                showToast(`Caricate ${letture.length} letture dal server`);
+                loadedFromFirebase = true;
+                showToast(`Caricate ${letture.length} letture da Firebase`);
             }
+
+            const fbHeating = await window.FirebaseService.getHeatingPeriods();
+            if (fbHeating && fbHeating.length > 0) {
+                heatingPeriods = fbHeating;
+                storage.set('heatingPeriods', heatingPeriods);
+            }
+        } catch (e) {
+            console.warn('Errore caricamento Firebase:', e);
         }
-    } catch (e) {
-        console.log('Server non disponibile, uso localStorage');
     }
 
-    // Se ancora vuoto, usa dati inline (se disponibili)
-    if (letture.length === 0 && typeof INITIAL_DATA !== 'undefined') {
-        letture = INITIAL_DATA;
-        storage.set('letture', letture);
-        showToast(`Caricate ${letture.length} letture iniziali`);
+    // 2. Se Firebase fallisce o è vuoto, prova API server
+    if (!loadedFromFirebase) {
+        try {
+            const response = await fetch(API_URL);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.length > 0) {
+                    letture = data;
+                    storage.set('letture', letture);
+                    showToast(`Caricate ${letture.length} letture dal server`);
+                }
+            }
+        } catch (e) {
+            console.log('Server non disponibile, uso localStorage');
+        }
+    }
+
+    // 3. Se ancora vuoto, usa dati inline/localStorage
+    if (letture.length === 0) {
+        // ... esistente ...
+        if (typeof INITIAL_DATA !== 'undefined') {
+            letture = INITIAL_DATA;
+            storage.set('letture', letture);
+            // Se Firebase è attivo ma vuoto, potremmo migrare i dati qui...
+        }
     }
 
     // Carica periodi riscaldamento iniziali se vuoti
     if (heatingPeriods.length === 0 && typeof INITIAL_HEATING_PERIODS !== 'undefined') {
         heatingPeriods = INITIAL_HEATING_PERIODS;
         storage.set('heatingPeriods', heatingPeriods);
-        console.log(`Caricati ${heatingPeriods.length} periodi riscaldamento iniziali`);
     }
 
     populateFilters();
