@@ -159,12 +159,12 @@ document.getElementById('btn-toggle-theme').addEventListener('click', () => {
 const updateHeatingUI = () => {
     const dot = document.getElementById('heating-dot');
     const btn = document.getElementById('btn-toggle-heating-topbar');
-    if (heatingOn) {
-        dot.classList.add('on');
-        btn.classList.add('active');
-    } else {
-        dot.classList.remove('on');
-        btn.classList.remove('active');
+    // Safe access - these elements may have been removed from HTML
+    if (dot) {
+        heatingOn ? dot.classList.add('on') : dot.classList.remove('on');
+    }
+    if (btn) {
+        heatingOn ? btn.classList.add('active') : btn.classList.remove('active');
     }
 };
 
