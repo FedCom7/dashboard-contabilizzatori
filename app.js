@@ -1236,7 +1236,7 @@ const renderHeatingPeriods = () => {
 // Add heating period handler
 const addHeatingPeriodBtn = document.getElementById('btn-add-heating-period');
 if (addHeatingPeriodBtn) {
-    addHeatingPeriodBtn.addEventListener('click', () => {
+    addHeatingPeriodBtn.addEventListener('click', async () => {
         const startInput = document.getElementById('heating-start-date');
         const endInput = document.getElementById('heating-end-date');
 
