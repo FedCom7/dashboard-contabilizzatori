@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Contabilizzatori</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-text">Contabilizzatori</span>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-section="dashboard">Dashboard</button>
+                <button class="nav-tab" data-section="dettaglio">Dettaglio</button>
+                <button class="nav-tab" data-section="inserimento">Inserimento</button>
+                <button class="nav-tab" data-section="importa">Importa</button>
+            </nav>
+            <div class="header-right">
+                <button class="btn-icon-header" id="btn-toggle-theme" title="Cambia tema">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <button class="btn-icon-header" id="btn-settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="dashboard-layout">
+                    <!-- Sidebar Filtri -->
+                    <aside class="sidebar-filters">
+                        <div class="filter-section">
+                            <h4>Tipo Grafico</h4>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-chart-type="confronto-anni">Confronto
+                                    Anni</button>
+                                <button class="filter-btn" data-chart-type="andamento">Andamento</button>
+                                <button class="filter-btn" data-chart-type="stanze">Per Stanza</button>
+                                <button class="filter-btn" data-chart-type="variazione">Variazione</button>
+                                <button class="filter-btn" data-chart-type="clima">🌡️ Clima</button>
+                                <button class="filter-btn" data-chart-type="stima-giornaliera">📈 Stima
+                                    Giornaliera</button>
+                            </div>
+                            <div id="clima-anno-selector" style="margin-top: 12px; display: none;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Anno Clima:</label>
+                                <select id="clima-anno-select" class="input-dark"
+                                    style="width: 100%; margin-top: 4px; padding: 8px;">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4>Riscaldamento</h4>
+                            <div class="heating-history-link">
+                                <button class="btn-link" id="btn-heating-history">Storico accensioni</button>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Area Centrale -->
+                    <div class="main-area">
+                        <!-- Grafico Grande -->
+                        <div class="main-chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <h2>Andamento Consumi</h2>
+                                    <span class="chart-subtitle" id="chart-periodo-label">Ultimi 6 mesi</span>
+                                </div>
+                                <!-- Toggle Confronto/Stima -->
+                                <div id="chart-view-toggle" class="toggle-group" style="display: none;">
+                                    <button class="toggle-btn active" id="btn-view-confronto">Confronto</button>
+                                    <button class="toggle-btn" id="btn-view-stima">Stima Giornaliera</button>
+                                </div>
+                                <div class="chart-stats">
+                                    <div class="chart-stat">
+                                        <span class="chart-stat-value" id="stat-totale">0</span>
+                                        <span class="chart-stat-label">Consumo Totale</span>
+                                    </div>
+                                    <div class="chart-stat">
+                                        <span class="chart-stat-value" id="stat-media">0</span>
+                                        <span class="chart-stat-label">Media Lettura</span>
+                                    </div>
+                                    <div class="chart-stat">
+                                        <span class="chart-stat-value" id="stat-letture">0</span>
+                                        <span class="chart-stat-label">Letture</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-main"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Quadratini in basso -->
+                        <div class="bottom-widgets">
+                            <div class="widget" id="widget-1">
+                                <div class="widget-header">
+                                    <h4>Ultima Lettura</h4>
+                                </div>
+                                <div class="widget-content">
+                                    <span class="widget-value" id="ultima-lettura-valore">-</span>
+                                    <span class="widget-label" id="ultima-lettura-data">-</span>
+                                </div>
+                            </div>
+                            <div class="widget" id="widget-2">
+                                <div class="widget-header">
+                                    <h4>Consumo Totale Anno</h4>
+                                </div>
+                                <div class="widget-content">
+                                    <span class="widget-value" id="consumo-anno-corrente">-</span>
+                                    <span class="widget-label" id="label-anno-corrente">anno corrente</span>
+                                </div>
+                            </div>
+                            <div class="widget" id="widget-3">
+                                <div class="widget-header">
+                                    <h4>Giorni Riscaldamento</h4>
+                                </div>
+                                <div class="widget-content">
+                                    <span class="widget-value" id="giorni-riscaldamento">-</span>
+                                    <span class="widget-label" id="label-stagione">stagione corrente</span>
+                                </div>
+                            </div>
+                            <div class="widget" id="widget-4">
+                                <div class="widget-header">
+                                    <h4>Media Giornaliera</h4>
+                                </div>
+                                <div class="widget-content">
+                                    <span class="widget-value" id="media-giornaliera">-</span>
+                                    <span class="widget-label">per giorno</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dettaglio Section -->
+            <section id="dettaglio" class="section">
+                <div class="inserimento-fullwidth">
+                    <!-- Stima Giornaliera FIRST -->
+                    <div class="card card-fullwidth">
+                        <div class="card-header">
+                            <h3>📈 Stima Consumo Giornaliero</h3>
+                            <div class="dettaglio-controls">
+                                <select id="dettaglio-anno-select" class="input-dark" style="padding: 8px 12px;">
+                                </select>
+                                <span class="badge" id="stima-info">Interpolazione lineare tra letture</span>
+                            </div>
+                        </div>
+                        <div class="stima-content">
+                            <div class="stima-chart-container" style="height: 350px;">
+                                <canvas id="chart-stima"></canvas>
+                            </div>
+                            <div class="stima-stats" style="display: flex; gap: 20px; margin-top: 16px;">
+                                <div class="stat-card">
+                                    <span class="stat-label">Media Giornaliera</span>
+                                    <span class="stat-value" id="stima-media">-</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-label">Giorno Max</span>
+                                    <span class="stat-value" id="stima-max">-</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-label">Totale Stimato</span>
+                                    <span class="stat-value" id="stima-totale">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table SECOND -->
+                    <div class="card card-fullwidth" style="margin-top: 20px;">
+                        <div class="card-header">
+                            <h3>📋 Dettaglio Letture</h3>
+                            <div class="toggle-group">
+                                <button class="toggle-btn active" id="btn-valori-assoluti">Valori Assoluti</button>
+                                <button class="toggle-btn" id="btn-differenze">Differenze</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="letture-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Giorni</th>
+                                        <th>Cucina</th>
+                                        <th>Soggiorno</th>
+                                        <th>Camera</th>
+                                        <th>Cameretta</th>
+                                        <th>Bagno</th>
+                                        <th>Totale</th>
+                                        <th>Media/g</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dettaglio-table-body">
+                                </tbody>
+                                <tfoot id="dettaglio-table-footer">
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inserimento Section -->
+            <section id="inserimento" class="section">
+                <div class="inserimento-fullwidth">
+                    <!-- Scatter Plot with Heating Bands -->
+                    <div class="card card-fullwidth">
+                        <div class="card-header">
+                            <h3>📊 Andamento Letture</h3>
+                            <div id="scatter-season-badges" class="season-badges"></div>
+                        </div>
+                        <div class="scatter-chart-container" style="height: 350px; position: relative;">
+                            <canvas id="chart-scatter-registro"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Heating Period Input -->
+                    <div class="card card-fullwidth" style="margin-top: 20px;">
+                        <div class="card-header">
+                            <h3>🔥 Periodi Riscaldamento</h3>
+                            <div class="heating-input-form">
+                                <input type="date" id="heating-start-date" class="input-dark" title="Data Accensione">
+                                <span style="color: var(--text-muted); padding: 0 8px;">→</span>
+                                <input type="date" id="heating-end-date" class="input-dark" title="Data Spegnimento">
+                                <button class="btn-primary" id="btn-add-heating-period">+ Aggiungi Periodo</button>
+                            </div>
+                        </div>
+                        <div class="heating-periods-list" id="heating-periods-list">
+                            <!-- Generated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Registro Letture -->
+                    <div class="card card-fullwidth" style="margin-top: 20px;">
+                        <div class="card-header">
+                            <h3>Registro Letture</h3>
+                            <button class="btn-primary" id="btn-nuova-riga">+ Nuova Lettura</button>
+                        </div>
+                        <div class="table-wrapper-full">
+                            <table class="table-dark table-editable">
+                                <thead>
+                                    <tr>
+                                        <th class="heating-status-cell" title="Riscaldamento">🔥</th>
+                                        <th class="col-stagione">Stagione</th>
+                                        <th class="col-data">Data</th>
+                                        <th class="col-durata">Durata</th>
+                                        <th class="col-temp">T.Ext</th>
+                                        <th class="col-stanza">Cucina</th>
+                                        <th class="col-stanza">Soggiorno</th>
+                                        <th class="col-stanza">Camera</th>
+                                        <th class="col-stanza">Cameretta</th>
+                                        <th class="col-stanza">Bagno</th>
+                                        <th class="col-tot">Tot</th>
+                                        <th class="col-parziali">Parziali</th>
+                                        <th class="col-media">Media</th>
+                                        <th class="col-actions"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabella-letture-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Importa Section -->
+            <section id="importa" class="section">
+                <div class="import-layout">
+                    <div class="card card-import">
+                        <div class="drop-zone" id="drop-zone">
+                            <div class="drop-content">
+                                <div class="drop-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.5">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <p class="drop-text">Trascina qui il file CSV o Excel</p>
+                                <p class="drop-hint">oppure</p>
+                                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
+                                <button class="btn-primary" id="btn-sfoglia">Sfoglia File</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-import-info">
+                        <h3>Formato File</h3>
+                        <p>Il file deve contenere le colonne:</p>
+                        <div class="format-example">
+                            <code>data,cucina,soggiorno,camera,cameretta,bagno,stagione</code>
+                        </div>
+                        <ul class="format-list">
+                            <li><strong>data</strong> - GG/MM/AAAA o AAAA-MM-GG</li>
+                            <li><strong>cucina, soggiorno, camera, cameretta, bagno</strong> - Valori contatore</li>
+                            <li><strong>stagione</strong> - Es: 23/24, 24/25</li>
+                        </ul>
+                        <button class="btn-secondary btn-full" id="btn-scarica-template">Scarica Template</button>
+                    </div>
+                </div>
+                <div id="preview-import" class="card card-preview" style="display: none;">
+                    <div class="card-header">
+                        <h3>Anteprima Importazione</h3>
+                        <div class="preview-stats">
+                            <span class="badge" id="preview-righe">0 righe</span>
+                            <span class="badge" id="preview-contabilizzatori">0 contabilizzatori</span>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="table-dark" id="tabella-preview">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="preview-actions">
+                        <button class="btn-primary" id="btn-conferma-import">Conferma Importazione</button>
+                        <button class="btn-secondary" id="btn-annulla-import">Annulla</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="modal-settings" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Impostazioni</h2>
+                    <button class="btn-close" id="close-settings">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h4>Gestione Contabilizzatori</h4>
+                        <div class="meters-list" id="lista-contabilizzatori">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Esporta Dati</h4>
+                        <div class="btn-row">
+                            <button class="btn-secondary" id="btn-esporta-csv">Esporta CSV</button>
+                            <button class="btn-secondary" id="btn-esporta-json">Esporta JSON</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>🌡️ Posizione Meteo</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                            Coordinate per i dati meteorologici Open-Meteo
+                        </p>
+                        <div class="btn-row" style="gap: 12px; margin-bottom: 12px;">
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label>Latitudine</label>
+                                <input type="number" id="setting-lat" class="input-dark" step="0.0001" value="45.5962">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label>Longitudine</label>
+                                <input type="number" id="setting-lng" class="input-dark" step="0.0001" value="8.9167">
+                            </div>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn-secondary" id="btn-salva-posizione">Salva Posizione</button>
+                            <button class="btn-secondary" id="btn-pulisci-cache-meteo">Pulisci Cache</button>
+                        </div>
+                    </div>
+                    <div class="settings-section danger">
+                        <h4>Zona Pericolosa</h4>
+                        <p>Elimina tutti i dati salvati</p>
+                        <button class="btn-danger" id="btn-elimina-tutti">Elimina Tutti i Dati</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Meter Modal -->
+        <div id="modal-contabilizzatore" class="modal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h2>Nuovo Contabilizzatore</h2>
+                    <button class="btn-close close-meter-modal">&times;</button>
+                </div>
+                <form id="form-nuovo-contabilizzatore">
+                    <div class="form-group">
+                        <label>Nome/Identificativo</label>
+                        <input type="text" id="nuovo-nome" class="input-dark" placeholder="Es: Appartamento 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="nuovo-tipo" class="input-dark">
+                            <option value="calore">Calore</option>
+                            <option value="acqua-calda">Acqua Calda</option>
+                            <option value="acqua-fredda">Acqua Fredda</option>
+                            <option value="gas">Gas</option>
+                            <option value="elettricita">Elettricità</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unità di Misura</label>
+                        <input type="text" id="nuovo-unita" class="input-dark" placeholder="Es: kWh, m³" value="kWh">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicazione</label>
+                        <input type="text" id="nuovo-ubicazione" class="input-dark" placeholder="Es: Piano 2, Int. 5">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-full">Aggiungi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Heating History Modal -->
+    <div id="modal-heating" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Storico Riscaldamento</h2>
+                <button class="btn-close" id="close-heating">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="heating-summary">
+                    <div class="heating-stat">
+                        <span class="heating-stat-value" id="heating-total-days">0</span>
+                        <span class="heating-stat-label">Giorni Totali</span>
+                    </div>
+                    <div class="heating-stat">
+                        <span class="heating-stat-value" id="heating-periods">0</span>
+                        <span class="heating-stat-label">Periodi</span>
+                    </div>
+                    <div class="heating-stat">
+                        <span class="heating-stat-value" id="heating-current-season">0</span>
+                        <span class="heating-stat-label">Stagione Corrente</span>
+                    </div>
+                </div>
+                <div class="heating-list-header">
+                    <h4>Storico Accensioni/Spegnimenti</h4>
+                    <button class="btn-secondary btn-small" id="btn-add-heating-event">+ Aggiungi Evento</button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="table-dark">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Evento</th>
+                                <th>Durata</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="heating-history-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
