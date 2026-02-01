@@ -494,6 +494,12 @@ const renderCalendario = (year = selectedCalendarioYear) => {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Get all available years
+    const years = new Set();
+    letture.forEach(l => years.add(new Date(l.data).getFullYear()));
+    years.add(new Date().getFullYear());
+    const sortedYears = [...years].sort((a, b) => b - a);
+
     // Build legend - show all seasons that have readings in this year
     const legendColors = {};
     letture.forEach(l => {
@@ -504,7 +510,18 @@ const renderCalendario = (year = selectedCalendarioYear) => {
         }
     });
 
-    let html = `<div class="calendario-legend">
+    // Year selector at top center
+    let html = `
+    <div class="calendario-year-selector">
+        <button class="calendario-nav-btn" id="btn-prev-year">◀</button>
+        <select id="calendario-anno-inline" class="calendario-year-select">
+            ${sortedYears.map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('')}
+        </select>
+        <button class="calendario-nav-btn" id="btn-next-year">▶</button>
+    </div>`;
+
+    // Legend
+    html += `<div class="calendario-legend">
         <span style="font-weight: 600; margin-right: 8px;">Legenda:</span>
         ${Object.entries(legendColors).map(([stagione, color]) =>
         `<div class="legend-item">
@@ -546,14 +563,14 @@ const renderCalendario = (year = selectedCalendarioYear) => {
             const isToday = dateStr === today;
 
             let classes = 'calendario-day';
-            if (isToday) classes += ' today';
+            if (isToday && !reading) classes += ' today';
             if (reading) classes += ' has-reading';
 
-            html += `<div class="${classes}">`;
+            html += `<div class="${classes}"`;
             if (reading) {
-                html += `<div class="reading-dot" style="background: ${reading.color}"></div>`;
+                html += ` style="--dot-color: ${reading.color}"`;
             }
-            html += `${day}</div>`;
+            html += `>${day}</div>`;
         }
 
         html += '</div></div>';
@@ -561,35 +578,38 @@ const renderCalendario = (year = selectedCalendarioYear) => {
 
     html += '</div>';
     container.innerHTML = html;
-};
 
-// Populate calendar year selector
-const populateCalendarioYearSelector = () => {
-    const select = document.getElementById('calendario-anno-select');
-    if (!select) return;
-
-    // Get all years from letture
-    const years = new Set();
-    letture.forEach(l => {
-        years.add(new Date(l.data).getFullYear());
+    // Attach event listeners for navigation
+    document.getElementById('btn-prev-year')?.addEventListener('click', () => {
+        const idx = sortedYears.indexOf(selectedCalendarioYear);
+        if (idx < sortedYears.length - 1) {
+            selectedCalendarioYear = sortedYears[idx + 1];
+            renderCalendario(selectedCalendarioYear);
+            updateCalendarioStats();
+        }
     });
 
-    // Add current year if not present
-    years.add(new Date().getFullYear());
+    document.getElementById('btn-next-year')?.addEventListener('click', () => {
+        const idx = sortedYears.indexOf(selectedCalendarioYear);
+        if (idx > 0) {
+            selectedCalendarioYear = sortedYears[idx - 1];
+            renderCalendario(selectedCalendarioYear);
+            updateCalendarioStats();
+        }
+    });
 
-    const sortedYears = [...years].sort((a, b) => b - a);
-
-    select.innerHTML = sortedYears.map(y =>
-        `<option value="${y}" ${y === selectedCalendarioYear ? 'selected' : ''}>${y}</option>`
-    ).join('');
+    document.getElementById('calendario-anno-inline')?.addEventListener('change', (e) => {
+        selectedCalendarioYear = parseInt(e.target.value);
+        renderCalendario(selectedCalendarioYear);
+        updateCalendarioStats();
+    });
 };
 
-// Calendar year change handler
-document.getElementById('calendario-anno-select')?.addEventListener('change', (e) => {
-    selectedCalendarioYear = parseInt(e.target.value);
-    renderCalendario(selectedCalendarioYear);
-});
-
+// Update stats for calendario
+const updateCalendarioStats = () => {
+    const yearReadings = letture.filter(l => new Date(l.data).getFullYear() === selectedCalendarioYear);
+    document.getElementById('stat-letture').textContent = yearReadings.length;
+};
 
 const updateChart = async () => {
     const ctx = document.getElementById('chart-main').getContext('2d');
@@ -599,21 +619,14 @@ const updateChart = async () => {
     const climaSelector = document.getElementById('clima-anno-selector');
     climaSelector.style.display = currentChartType === 'clima' ? 'block' : 'none';
 
-    // Show/hide calendario selector
-    const calendarioSelector = document.getElementById('calendario-anno-selector');
-    calendarioSelector.style.display = currentChartType === 'calendario' ? 'block' : 'none';
-
     // Show/hide canvas vs calendario
     const canvas = document.getElementById('chart-main');
     const calendarioContainer = document.getElementById('calendario-container');
     if (currentChartType === 'calendario') {
         canvas.style.display = 'none';
         calendarioContainer.style.display = 'block';
-        populateCalendarioYearSelector();
         renderCalendario(selectedCalendarioYear);
-        // Update stats for calendario - count readings in selected year
-        const yearReadings = letture.filter(l => new Date(l.data).getFullYear() === selectedCalendarioYear);
-        document.getElementById('stat-letture').textContent = yearReadings.length;
+        updateCalendarioStats();
         document.getElementById('stat-totale').textContent = '-';
         document.getElementById('stat-media').textContent = '-';
         return;
