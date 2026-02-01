@@ -989,8 +989,10 @@ const updateChart = async () => {
         selectedAnni.forEach(s => seasonSet.add(s));
 
         const seasons = [...seasonSet].sort((a, b) => {
-            const aYear = parseInt(a.split('-')[0]);
-            const bYear = parseInt(b.split('-')[0]);
+            const aMatch = a.match(/(\d{2})/);
+            const bMatch = b.match(/(\d{2})/);
+            const aYear = aMatch ? parseInt(aMatch[1]) : 0;
+            const bYear = bMatch ? parseInt(bMatch[1]) : 0;
             return aYear - bYear;
         });
 
@@ -1003,8 +1005,8 @@ const updateChart = async () => {
             const [year, month, day] = dateStr.split('-').map(Number);
             const date = new Date(year, month - 1, day);
 
-            // Get season start year from stagione (e.g., "18-19" -> 2018)
-            const match = stagione.match(/(\d{2})-(\d{2})/);
+            // Get season start year from stagione (e.g., "18/19" or "18-19" -> 2018)
+            const match = stagione.match(/(\d{2})[\/\-](\d{2})/);
             const startYear = match ? 2000 + parseInt(match[1]) : year;
             const seasonStart = new Date(startYear, 7, 1); // August 1
 
