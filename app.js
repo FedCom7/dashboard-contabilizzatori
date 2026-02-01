@@ -1093,28 +1093,34 @@ const updateChart = async () => {
 
     // Special config for periodi Gantt chart
     if (currentChartType === 'periodi') {
+        // Days cumulative from Aug 1: Ago=0, Set=31, Ott=61, Nov=92, Dic=122, Gen=153, Feb=184, Mar=212, Apr=243, Mag=273, Giu=304, Lug=334
+        const monthStarts = [0, 31, 61, 92, 122, 153, 184, 212, 243, 273, 304, 334, 365];
+        const monthLabels = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago'];
+
         chartOptions.indexAxis = 'y'; // Horizontal bars
         chartOptions.scales = {
             x: {
                 type: 'linear',
                 min: 0,
                 max: 365,
-                grid: { color: 'rgba(0,0,0,0.1)' },
+                grid: {
+                    color: (ctx) => {
+                        // Draw grid lines at month boundaries
+                        return monthStarts.includes(ctx.tick.value) ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.05)';
+                    }
+                },
                 ticks: {
                     callback: (value) => {
-                        // Convert day number to month label
-                        const months = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug'];
-                        const daysPerMonth = [31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30, 31];
-                        let cumDays = 0;
-                        for (let i = 0; i < 12; i++) {
-                            if (value <= cumDays + daysPerMonth[i] / 2) {
-                                return months[i];
-                            }
-                            cumDays += daysPerMonth[i];
-                        }
-                        return '';
+                        const idx = monthStarts.indexOf(value);
+                        return idx >= 0 ? monthLabels[idx] : '';
                     },
-                    stepSize: 30
+                    stepSize: 1,
+                    autoSkip: false,
+                    includeBounds: true,
+                    // Only show ticks at month starts
+                    afterBuildTicks: (axis) => {
+                        axis.ticks = monthStarts.map(v => ({ value: v }));
+                    }
                 }
             },
             y: {
