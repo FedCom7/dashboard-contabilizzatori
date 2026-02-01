@@ -974,6 +974,76 @@ const updateChart = async () => {
                 categoryPercentage: 0.95
             });
         }
+
+    } else if (currentChartType === 'periodi') {
+        // Horizontal bar chart showing heating periods for each season
+        // X axis: months from August to August (13 months)
+        // Y axis: seasons
+        const monthLabels = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago'];
+        labels = monthLabels;
+
+        // Get all seasons from heating periods
+        const seasonSet = new Set();
+        heatingPeriods.forEach(p => {
+            const startStagione = getStagione(p.start);
+            seasonSet.add(startStagione);
+        });
+
+        // Also add selected seasons
+        selectedAnni.forEach(s => seasonSet.add(s));
+
+        const seasons = [...seasonSet].sort((a, b) => {
+            // Sort by year extracted from season (e.g., "24-25" -> 24)
+            const aYear = parseInt(a.split('-')[0]);
+            const bYear = parseInt(b.split('-')[0]);
+            return aYear - bYear;
+        });
+
+        // For each season, create bars for each month where heating was on
+        seasons.forEach((stagione, idx) => {
+            const seasonPeriods = heatingPeriods.filter(p => getStagione(p.start) === stagione);
+            const monthData = new Array(13).fill(0);
+
+            seasonPeriods.forEach(period => {
+                const start = new Date(period.start);
+                const end = new Date(period.end);
+
+                // Get the base year for this season (August start year)
+                const match = stagione.match(/(\d{2})-(\d{2})/);
+                const baseYear = match ? 2000 + parseInt(match[1]) : start.getFullYear();
+
+                // For each day in the period, mark the corresponding month
+                let current = new Date(start);
+                while (current <= end) {
+                    const month = current.getMonth();
+                    const year = current.getFullYear();
+
+                    // Calculate month index (0 = August of start year, 12 = August of end year)
+                    let monthIdx;
+                    if (month >= 7) { // Aug-Dec (7-11) -> indices 0-4
+                        monthIdx = month - 7;
+                    } else { // Jan-Aug (0-7) -> indices 5-12
+                        monthIdx = month + 5;
+                    }
+
+                    if (monthIdx >= 0 && monthIdx < 13) {
+                        monthData[monthIdx] = 1; // Mark this month as having heating
+                    }
+
+                    current.setDate(current.getDate() + 1);
+                }
+            });
+
+            datasets.push({
+                label: stagione,
+                data: monthData,
+                backgroundColor: getStagioneColor(stagione),
+                borderColor: getStagioneColor(stagione),
+                borderWidth: 1,
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+            });
+        });
     }
 
     // Update stats
@@ -984,7 +1054,7 @@ const updateChart = async () => {
     document.getElementById('stat-letture').textContent = allConsumo.length;
 
     let chartType = 'line';
-    if (currentChartType === 'variazione') chartType = 'bar';
+    if (currentChartType === 'variazione' || currentChartType === 'periodi') chartType = 'bar';
 
     const chartOptions = {
         responsive: true,
@@ -1009,16 +1079,28 @@ const updateChart = async () => {
         },
         scales: {
             y: {
+                display: currentChartType !== 'periodi',
                 beginAtZero: true,
                 grid: { color: 'rgba(0,0,0,0.05)' },
                 title: { display: currentChartType === 'clima', text: 'Consumo' },
-                position: 'left'
+                position: 'left',
+                max: currentChartType === 'periodi' ? 1.5 : undefined
             },
             x: {
-                grid: { display: false }
+                grid: { display: false },
+                stacked: currentChartType === 'periodi'
             }
         }
     };
+
+    // For periodi chart, stack bars and customize
+    if (currentChartType === 'periodi') {
+        chartOptions.indexAxis = 'x'; // Vertical bars (one per month)
+        chartOptions.scales.y.stacked = false;
+        chartOptions.plugins.tooltip.callbacks.label = (ctx) => {
+            return ctx.parsed.y > 0 ? `${ctx.dataset.label}: Riscaldamento ACCESO` : '';
+        };
+    }
 
     // Add second Y axis for temperature in clima mode
     if (currentChartType === 'clima') {
