@@ -767,14 +767,50 @@ const updateChart = async () => {
     } else if (currentChartType === 'andamento') {
         const allData = Object.values(byStagione).flat().sort((a, b) => new Date(a.data) - new Date(b.data));
         labels = allData.map(l => formatDate(l.data));
+
+        // Curva consumo effettivo
         datasets.push({
-            label: 'Consumo',
+            label: 'Consumo Effettivo',
             data: allData.map(l => l.consumo.totale),
             borderColor: '#e8673c',
             backgroundColor: 'rgba(232, 103, 60, 0.1)',
             fill: true,
             ...lineOptions
         });
+
+        // Generate stima giornaliera for all selected seasons
+        const allDailyStima = [];
+        for (const anno of selectedAnni) {
+            const dailyData = await generateDailyStimaLine(anno);
+            if (dailyData) allDailyStima.push(...dailyData);
+        }
+
+        // Aggregate stima by reading date - sum the days between readings
+        if (allDailyStima.length > 0) {
+            const stimaByReading = [];
+            for (let i = 1; i < allData.length; i++) {
+                const prevDate = new Date(allData[i - 1].data);
+                const currDate = new Date(allData[i].data);
+
+                // Sum stima between prev and curr reading
+                const sumStima = allDailyStima
+                    .filter(d => d.date >= prevDate && d.date < currDate)
+                    .reduce((sum, d) => sum + d.value, 0);
+
+                stimaByReading.push(sumStima);
+            }
+
+            // Add stima curve (starts from second reading)
+            datasets.push({
+                label: 'Stima Interpolata',
+                data: [null, ...stimaByReading], // null for first point
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderDash: [5, 5],
+                fill: false,
+                ...lineOptions
+            });
+        }
 
     } else if (currentChartType === 'stanze') {
         const allData = Object.values(byStagione).flat().sort((a, b) => new Date(a.data) - new Date(b.data));
@@ -885,52 +921,27 @@ const updateChart = async () => {
                 }
             }
 
-            // Create weekly sampled labels and data for temperature (all available)
-            // But for current year, limit temperature to today
+            // Create daily labels and data (like in Dettaglio Stima Consumi)
             const tempLabels = [];
             const tempData = [];
             const consumoData = [];
 
-            for (let i = 0; i < temps.time.length; i += 7) {
-                const date = new Date(temps.time[i]);
+            for (let i = 0; i < temps.time.length; i++) {
+                const dateStr = temps.time[i];
+                const date = new Date(dateStr);
 
-                // For current year, stop temperature at today
+                // For current year, stop at today
                 if (isCurrentYear && date > today) break;
 
+                // For current year, only include consumo up to last reading date
+                const showConsumo = !isCurrentYear || !lastReadingDate || date <= lastReadingDate;
+
                 tempLabels.push(date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }));
+                tempData.push(temps.temperature_2m_mean[i]);
 
-                // Average of the week
-                let weekSum = 0, weekCount = 0;
-                for (let j = i; j < Math.min(i + 7, temps.time.length); j++) {
-                    const dayDate = new Date(temps.time[j]);
-                    // For current year, don't include days after today
-                    if (isCurrentYear && dayDate > today) break;
-
-                    if (temps.temperature_2m_mean[j] !== null) {
-                        weekSum += temps.temperature_2m_mean[j];
-                        weekCount++;
-                    }
-                }
-                tempData.push(weekCount > 0 ? weekSum / weekCount : null);
-
-                // Sum daily consumption for this week
-                // For current year, only include days up to last reading
-                let weekConsumo = 0;
-                let hasData = false;
-                for (let j = i; j < Math.min(i + 7, temps.time.length); j++) {
-                    const dayDateStr = temps.time[j];
-                    const dayDate = new Date(dayDateStr);
-
-                    // For current year, stop at last reading date
-                    if (isCurrentYear && lastReadingDate && dayDate > lastReadingDate) break;
-
-                    const dayData = dailyData.find(d => d.dateStr === dayDateStr);
-                    if (dayData) {
-                        weekConsumo += dayData.value;
-                        hasData = true;
-                    }
-                }
-                consumoData.push(hasData ? weekConsumo : null);
+                // Find daily consumption
+                const dayData = dailyData.find(d => d.dateStr === dateStr);
+                consumoData.push(showConsumo && dayData ? dayData.value : null);
             }
 
             labels = tempLabels;
@@ -950,18 +961,18 @@ const updateChart = async () => {
                 order: 1
             });
 
-            // Daily consumption estimation bars (weekly aggregated)
+            // Daily consumption estimation bars
             datasets.push({
                 type: 'bar',
                 label: `Stima Consumo ${anno}`,
                 data: consumoData,
                 backgroundColor: getStagioneColor(anno) + 'aa',
                 borderColor: getStagioneColor(anno),
-                borderWidth: 1,
+                borderWidth: 0,
                 yAxisID: 'y',
                 order: 0,
-                barPercentage: 0.9,
-                categoryPercentage: 0.95
+                barPercentage: 1.0,
+                categoryPercentage: 1.0
             });
         }
     }
