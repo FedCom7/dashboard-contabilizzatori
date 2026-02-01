@@ -976,11 +976,9 @@ const updateChart = async () => {
         }
 
     } else if (currentChartType === 'periodi') {
-        // Horizontal bar chart showing heating periods for each season
-        // X axis: months from August to August (13 months)
-        // Y axis: seasons
-        const monthLabels = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago'];
-        labels = monthLabels;
+        // Gantt-style horizontal bar chart
+        // Y axis: seasons (categories)
+        // X axis: days from August 1 to July 31 (0-365)
 
         // Get all seasons from heating periods
         const seasonSet = new Set();
@@ -988,60 +986,51 @@ const updateChart = async () => {
             const startStagione = getStagione(p.start);
             seasonSet.add(startStagione);
         });
-
-        // Also add selected seasons
         selectedAnni.forEach(s => seasonSet.add(s));
 
         const seasons = [...seasonSet].sort((a, b) => {
-            // Sort by year extracted from season (e.g., "24-25" -> 24)
             const aYear = parseInt(a.split('-')[0]);
             const bYear = parseInt(b.split('-')[0]);
             return aYear - bYear;
         });
 
-        // For each season, create bars for each month where heating was on
-        seasons.forEach((stagione, idx) => {
-            const seasonPeriods = heatingPeriods.filter(p => getStagione(p.start) === stagione);
-            const monthData = new Array(13).fill(0);
+        labels = seasons; // Y axis labels are seasons
 
-            seasonPeriods.forEach(period => {
-                const start = new Date(period.start);
-                const end = new Date(period.end);
+        // Helper: convert date to day-of-season (0 = Aug 1, 365 = Jul 31)
+        const dateToSeasonDay = (dateStr, stagione) => {
+            const date = new Date(dateStr);
+            const match = stagione.match(/(\d{2})-(\d{2})/);
+            const startYear = match ? 2000 + parseInt(match[1]) : date.getFullYear();
+            const seasonStart = new Date(startYear, 7, 1); // August 1
+            const diffDays = Math.floor((date - seasonStart) / (1000 * 60 * 60 * 24));
+            return Math.max(0, Math.min(365, diffDays));
+        };
 
-                // Get the base year for this season (August start year)
-                const match = stagione.match(/(\d{2})-(\d{2})/);
-                const baseYear = match ? 2000 + parseInt(match[1]) : start.getFullYear();
+        // Create one dataset per heating period (floating bars)
+        heatingPeriods.forEach((period, idx) => {
+            const stagione = getStagione(period.start);
+            const seasonIdx = seasons.indexOf(stagione);
+            if (seasonIdx === -1) return;
 
-                // For each day in the period, mark the corresponding month
-                let current = new Date(start);
-                while (current <= end) {
-                    const month = current.getMonth();
-                    const year = current.getFullYear();
+            const startDay = dateToSeasonDay(period.start, stagione);
+            const endDay = dateToSeasonDay(period.end, stagione);
 
-                    // Calculate month index (0 = August of start year, 12 = August of end year)
-                    let monthIdx;
-                    if (month >= 7) { // Aug-Dec (7-11) -> indices 0-4
-                        monthIdx = month - 7;
-                    } else { // Jan-Aug (0-7) -> indices 5-12
-                        monthIdx = month + 5;
-                    }
-
-                    if (monthIdx >= 0 && monthIdx < 13) {
-                        monthData[monthIdx] = 1; // Mark this month as having heating
-                    }
-
-                    current.setDate(current.getDate() + 1);
+            // Create data array with null for other seasons, [start, end] for this one
+            const data = seasons.map((s, i) => {
+                if (i === seasonIdx) {
+                    return [startDay, endDay];
                 }
+                return null;
             });
 
             datasets.push({
-                label: stagione,
-                data: monthData,
+                label: `Periodo ${idx + 1}`,
+                data: data,
                 backgroundColor: getStagioneColor(stagione),
                 borderColor: getStagioneColor(stagione),
                 borderWidth: 1,
-                barPercentage: 0.8,
-                categoryPercentage: 0.9
+                borderRadius: 4,
+                barPercentage: 0.6
             });
         });
     }
@@ -1088,19 +1077,10 @@ const updateChart = async () => {
             },
             x: {
                 grid: { display: false },
-                stacked: currentChartType === 'periodi'
+                stacked: false
             }
         }
     };
-
-    // For periodi chart, stack bars and customize
-    if (currentChartType === 'periodi') {
-        chartOptions.indexAxis = 'x'; // Vertical bars (one per month)
-        chartOptions.scales.y.stacked = false;
-        chartOptions.plugins.tooltip.callbacks.label = (ctx) => {
-            return ctx.parsed.y > 0 ? `${ctx.dataset.label}: Riscaldamento ACCESO` : '';
-        };
-    }
 
     // Add second Y axis for temperature in clima mode
     if (currentChartType === 'clima') {
@@ -1108,6 +1088,45 @@ const updateChart = async () => {
             position: 'right',
             grid: { display: false },
             title: { display: true, text: '°C' }
+        };
+    }
+
+    // Special config for periodi Gantt chart
+    if (currentChartType === 'periodi') {
+        chartOptions.indexAxis = 'y'; // Horizontal bars
+        chartOptions.scales = {
+            x: {
+                type: 'linear',
+                min: 0,
+                max: 365,
+                grid: { color: 'rgba(0,0,0,0.1)' },
+                ticks: {
+                    callback: (value) => {
+                        // Convert day number to month label
+                        const months = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug'];
+                        const daysPerMonth = [31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30, 31];
+                        let cumDays = 0;
+                        for (let i = 0; i < 12; i++) {
+                            if (value <= cumDays + daysPerMonth[i] / 2) {
+                                return months[i];
+                            }
+                            cumDays += daysPerMonth[i];
+                        }
+                        return '';
+                    },
+                    stepSize: 30
+                }
+            },
+            y: {
+                grid: { display: false }
+            }
+        };
+        chartOptions.plugins.legend.display = false;
+        chartOptions.plugins.tooltip.callbacks.label = (ctx) => {
+            const period = heatingPeriods[ctx.datasetIndex];
+            if (!period) return '';
+            const formatDate = (d) => new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+            return `${formatDate(period.start)} → ${formatDate(period.end)}`;
         };
     }
 
