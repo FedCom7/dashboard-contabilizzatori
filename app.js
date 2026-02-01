@@ -767,9 +767,19 @@ const updateChart = async () => {
     } else if (currentChartType === 'andamento') {
         const allData = Object.values(byStagione).flat().sort((a, b) => new Date(a.data) - new Date(b.data));
         labels = allData.map(l => formatDate(l.data));
+
+        // Calculate daily average consumption (consumo / giorni tra letture)
+        const dailyAverage = allData.map((l, i) => {
+            if (i === 0) return 0;
+            const prevDate = new Date(allData[i - 1].data);
+            const currDate = new Date(l.data);
+            const days = Math.max(1, Math.ceil((currDate - prevDate) / (1000 * 60 * 60 * 24)));
+            return l.consumo.totale / days;
+        });
+
         datasets.push({
-            label: 'Consumo',
-            data: allData.map(l => l.consumo.totale),
+            label: 'Media Giornaliera',
+            data: dailyAverage,
             borderColor: '#e8673c',
             backgroundColor: 'rgba(232, 103, 60, 0.1)',
             fill: true,
