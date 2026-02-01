@@ -998,22 +998,43 @@ const updateChart = async () => {
 
         // Helper: convert date to day-of-season (0 = Aug 1, 365 = Jul 31)
         const dateToSeasonDay = (dateStr, stagione) => {
-            const date = new Date(dateStr);
+            if (!dateStr) return null;
+            // Parse date parts to avoid timezone issues
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+
+            // Get season start year from stagione (e.g., "18-19" -> 2018)
             const match = stagione.match(/(\d{2})-(\d{2})/);
-            const startYear = match ? 2000 + parseInt(match[1]) : date.getFullYear();
+            const startYear = match ? 2000 + parseInt(match[1]) : year;
             const seasonStart = new Date(startYear, 7, 1); // August 1
-            const diffDays = Math.floor((date - seasonStart) / (1000 * 60 * 60 * 24));
+
+            const diffMs = date.getTime() - seasonStart.getTime();
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
             return Math.max(0, Math.min(365, diffDays));
         };
 
         // Create one dataset per heating period (floating bars)
         heatingPeriods.forEach((period, idx) => {
+            if (!period.start) return;
+
             const stagione = getStagione(period.start);
             const seasonIdx = seasons.indexOf(stagione);
             if (seasonIdx === -1) return;
 
             const startDay = dateToSeasonDay(period.start, stagione);
-            const endDay = dateToSeasonDay(period.end, stagione);
+            // If no end date, use today or end of season
+            let endDay;
+            if (period.end) {
+                endDay = dateToSeasonDay(period.end, stagione);
+            } else {
+                // Use today for open-ended periods
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                endDay = dateToSeasonDay(todayStr, stagione);
+            }
+
+            if (startDay === null || endDay === null) return;
 
             // Create data array with null for other seasons, [start, end] for this one
             const data = seasons.map((s, i) => {
