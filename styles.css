@@ -10,86 +10,398 @@
 }
 
 :root {
-    --bg-body: #f5f5f7;
+    /* Mockup palette: cream background, dark sidebar, olive-green + lime accents */
+    --bg-body: rgb(227, 223, 212);
     --bg-card: #ffffff;
     --bg-card-solid: #ffffff;
-    --bg-card-hover: #fafafa;
-    --bg-input: #f0f0f3;
-    --bg-sidebar: #ffffff;
+    --bg-card-hover: #f6f5ee;
+    --bg-input: #f0eee3;
+    --bg-sidebar: rgb(30, 32, 31);
 
-    --accent-primary: #e8673c;
-    --accent-light: #f08963;
-    --accent-dark: #c94e28;
-    --accent-muted: rgba(232, 103, 60, 0.12);
-    --accent-glow: rgba(232, 103, 60, 0.25);
+    /* Olive green accent (primary) */
+    --accent-primary: #8c9a4e;
+    --accent-light: #a9b86d;
+    --accent-dark: #6c7a37;
+    --accent-muted: rgba(140, 154, 78, 0.14);
+    --accent-glow: rgba(140, 154, 78, 0.28);
 
-    --gradient-primary: linear-gradient(135deg, #e8673c 0%, #f08963 100%);
-    --gradient-warm: linear-gradient(135deg, #e8673c 0%, #f5a04a 100%);
+    /* Lime / "tennis ball" highlight */
+    --accent-lime: #cddc39;
+    --soft-green: #dde3c0;
+
+    --gradient-primary: linear-gradient(135deg, #8c9a4e 0%, #a9b86d 100%);
+    --gradient-warm: linear-gradient(135deg, #8c9a4e 0%, #cddc39 100%);
     --gradient-cool: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-    --gradient-card: linear-gradient(180deg, rgba(232, 103, 60, 0.03) 0%, transparent 100%);
+    --gradient-card: linear-gradient(180deg, rgba(140, 154, 78, 0.04) 0%, transparent 100%);
 
-    --text-primary: #1a1a2e;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
+    --text-primary: #1b1b18;
+    --text-secondary: #5f5f57;
+    --text-muted: #9a9a8e;
 
-    --border-color: #e2e8f0;
-    --border-light: #f1f5f9;
-    --border-glow: rgba(232, 103, 60, 0.3);
+    --border-color: #e0ded1;
+    --border-light: #eceadd;
+    --border-glow: rgba(140, 154, 78, 0.35);
 
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06);
-    --shadow-glow: 0 4px 20px rgba(232, 103, 60, 0.12);
-    --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(232, 103, 60, 0.08);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 28px rgba(0, 0, 0, 0.06);
+    --shadow-glow: 0 4px 20px rgba(140, 154, 78, 0.14);
+    --shadow-hover: 0 12px 36px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(140, 154, 78, 0.1);
 
     --radius-sm: 12px;
     --radius-md: 16px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-xl: 30px;
 
-    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-bg: rgba(255, 255, 255, 0.92);
     --glass-blur: blur(20px);
 }
 
 /* Dark Theme */
 [data-theme="dark"] {
-    --bg-body: #0f0f14;
-    --bg-card: #1a1a24;
-    --bg-card-solid: #1a1a24;
-    --bg-card-hover: #242432;
-    --bg-input: #242432;
-    --bg-sidebar: #14141c;
+    /* Stesso colore della parte scura del tablet, così il "telaio" non si vede in scuro */
+    --bg-body: #0d0e0c;
+    --bg-card: #1b1d18;
+    --bg-card-solid: #1b1d18;
+    --bg-card-hover: #262922;
+    --bg-input: #262922;
+    --bg-sidebar: #0d0e0c;
 
-    --accent-muted: rgba(232, 103, 60, 0.2);
-    --accent-glow: rgba(232, 103, 60, 0.35);
+    --accent-muted: rgba(140, 154, 78, 0.22);
+    --accent-glow: rgba(140, 154, 78, 0.38);
 
-    --gradient-card: linear-gradient(180deg, rgba(232, 103, 60, 0.05) 0%, transparent 100%);
+    --gradient-card: linear-gradient(180deg, rgba(140, 154, 78, 0.06) 0%, transparent 100%);
 
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-primary: #f1f3ea;
+    --text-secondary: #a3a594;
+    --text-muted: #6b6d5f;
 
-    --border-color: #2a2a3a;
-    --border-light: #1e1e2a;
-    --border-glow: rgba(232, 103, 60, 0.4);
+    --border-color: #2c2e26;
+    --border-light: #21231c;
+    --border-glow: rgba(140, 154, 78, 0.42);
 
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 4px 24px rgba(0, 0, 0, 0.4);
-    --shadow-glow: 0 4px 20px rgba(232, 103, 60, 0.2);
-    --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(232, 103, 60, 0.15);
+    --shadow-glow: 0 4px 20px rgba(140, 154, 78, 0.22);
+    --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(140, 154, 78, 0.18);
 
-    --glass-bg: rgba(26, 26, 36, 0.9);
+    --glass-bg: rgba(27, 29, 24, 0.9);
+}
+
+html, body {
+    height: 100%;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-body);
+    font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(120% 120% at 80% 0%, #5a6b3e 0%, #3b472b 45%, #2a3320 100%);
     min-height: 100vh;
     color: var(--text-primary);
     line-height: 1.5;
 }
 
+/* Titoli e numeri con il font display (Oswald: alto e condensato) */
+.topbar-welcome h1,
+.chart-title h2,
+.card-header h3,
+.widget-value,
+.chart-stat-value,
+.topbar-chip-value,
+.sidebar-logo-text,
+.sidebar-nav .nav-tab,
+.modal-header h2,
+.heating-stat-value {
+    font-family: 'Oswald', 'Archivo', sans-serif;
+}
+
+/* Etichette in monospace (maiuscolo) */
+.topbar-welcome p,
+.topbar-chip-label,
+.chart-stat-label,
+.widget-header h4,
+.filter-section h4,
+.card-label,
+.mono-label {
+    font-family: 'Space Mono', monospace;
+}
+
+/* Tablet flottante: rettangolo SCURO esterno */
 .app {
-    min-height: 100vh;
+    height: calc(100vh - 32px);
+    margin: 16px;
+    display: flex;
+    flex-direction: row;
+    background: var(--bg-sidebar);
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================
+   Sidebar (mockup style)
+   ========================================== */
+.app-sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: transparent;
+    color: #e8e8e2;
     display: flex;
     flex-direction: column;
+    padding: 26px 14px 22px 22px;
+    gap: 26px;
+    overflow-y: auto;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+}
+
+.sidebar-logo-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e6f24a, #b5c52e);
+    box-shadow: 0 0 12px rgba(205, 220, 57, 0.5);
+    flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #ffffff;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+/* Nav items (reuse .nav-tab class used by JS) */
+.sidebar-nav .nav-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 15px 14px 15px 14px;
+    border: none;
+    background: transparent;
+    color: #8d8d84;
+    font-size: 0.98rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 14px;
+    transition: all 0.18s ease;
+}
+
+.sidebar-nav .nav-tab:hover {
+    color: #ffffff;
+}
+
+.sidebar-nav .nav-tab.active {
+    color: var(--accent-lime);
+    background: transparent;
+    text-shadow: 0 0 14px rgba(205, 220, 57, 0.55);
+}
+
+/* Indicatore attivo: barretta lime attaccata al bordo della sidebar,
+   che "illumina" la scritta */
+.sidebar-nav .nav-tab.active::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    border-radius: 0 4px 4px 0;
+    background: var(--accent-lime);
+    box-shadow:
+        0 0 14px 2px rgba(205, 220, 57, 0.8),
+        14px 0 28px -2px rgba(205, 220, 57, 0.45);
+}
+
+.nav-tab-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: #7d7d74;
+    transition: color 0.18s ease;
+}
+
+.nav-tab-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sidebar-nav .nav-tab:hover .nav-tab-icon,
+.sidebar-nav .nav-tab.active .nav-tab-icon {
+    color: var(--accent-lime);
+}
+
+.sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-status-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sidebar-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ef4444;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar-status-dot.on {
+    background: #cddc39;
+    box-shadow: 0 0 10px rgba(205, 220, 57, 0.6);
+}
+
+.sidebar-status-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sidebar-status-text strong {
+    font-size: 0.8rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.sidebar-status-text span {
+    font-size: 0.7rem;
+    color: #8c8c84;
+}
+
+.sidebar-theme-btn {
+    width: 100%;
+    border-radius: var(--radius-md) !important;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #c8c8c0 !important;
+    height: 42px;
+}
+
+.sidebar-theme-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-theme-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ==========================================
+   Top Bar (mockup style)
+   ========================================== */
+/* Rettangolo CHIARO interno (più piccolo).
+   Spessore costante 14px su tutti i lati; raggio interno = raggio esterno (40) − 14 = 26
+   così il distacco tra i due riquadri è uniforme anche agli angoli. */
+.app-content {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-body);
+    border-radius: 26px;
+    margin: 14px 14px 14px 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 28px 8px;
+    flex-wrap: wrap;
+}
+
+.topbar-welcome {
+    flex: none;
+    min-width: 120px;
+    margin-right: 4px;
+}
+
+.topbar-welcome h1 {
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0;
+    line-height: 1;
+}
+
+.topbar-welcome p {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.topbar-chips {
+    display: flex;
+    gap: 10px;
+}
+
+.topbar-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 18px;
+    padding: 11px 20px;
+    min-width: 82px;
+    box-shadow: 0 8px 22px rgba(45, 51, 32, 0.08);
+}
+
+.topbar-chip-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.topbar-chip-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
 }
 
 /* ==========================================
@@ -153,12 +465,12 @@ body {
 }
 
 .btn-icon-header {
-    width: 36px;
-    height: 36px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
-    background: var(--bg-input);
-    color: var(--text-muted);
+    border: 1.5px solid rgba(27, 27, 24, 0.18);
+    background: var(--bg-body);
+    color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -167,8 +479,24 @@ body {
 }
 
 .btn-icon-header:hover {
-    border-color: var(--accent-primary);
+    border-color: rgba(27, 27, 24, 0.35);
     color: var(--text-primary);
+}
+
+.btn-icon-header svg {
+    width: 20px;
+    height: 20px;
+}
+
+#theme-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#theme-icon svg {
+    width: 22px;
+    height: 22px;
 }
 
 /* Pulsante Riscaldamento Top Bar */
@@ -218,17 +546,21 @@ body {
    ========================================== */
 .main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .section {
     display: none;
     flex: 1;
+    min-height: 0;
 }
 
 .section.active {
     display: flex;
+    min-height: 0;
     animation: fadeIn 0.2s ease;
 }
 
@@ -248,7 +580,60 @@ body {
 .dashboard-layout {
     display: flex;
     flex: 1;
+    min-height: 0;
     gap: 0;
+}
+
+/* Barra filtri grafico (chip orizzontali) */
+.chart-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.chart-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chart-filter-chips .filter-btn {
+    padding: 9px 18px;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 999px;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.chart-filter-chips .filter-btn:hover {
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(45, 51, 32, 0.08);
+}
+
+.chart-filter-chips .filter-btn.active {
+    background: var(--bg-sidebar);
+    color: var(--bg-body);
+}
+
+.chart-filter-extra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-filter-extra .btn-link {
+    text-decoration: none;
+    font-size: 0.8rem;
+    color: var(--accent-dark);
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Sidebar Filtri */
@@ -531,7 +916,7 @@ body {
 /* Area Principale */
 .main-area {
     flex: 1;
-    padding: 24px;
+    padding: 8px 24px 24px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -541,28 +926,15 @@ body {
 /* Grafico Principale - Premium Design */
 .main-chart-container {
     flex: 1;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    border: none;
+    border-radius: 26px;
     padding: 28px;
     display: flex;
     flex-direction: column;
-    min-height: 400px;
+    min-height: 360px;
     position: relative;
-    box-shadow: var(--shadow-card);
-}
-
-.main-chart-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-    opacity: 0.5;
+    box-shadow: 0 10px 30px rgba(45, 51, 32, 0.08);
 }
 
 .chart-header {
@@ -573,9 +945,10 @@ body {
 }
 
 .chart-title h2 {
-    font-size: 1.25rem;
+    font-size: 1.6rem;
     font-weight: 600;
     color: var(--text-primary);
+    letter-spacing: 0;
     margin-bottom: 4px;
 }
 
@@ -595,14 +968,11 @@ body {
 
 .chart-stat-value {
     display: block;
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.8rem;
+    font-weight: 600;
     color: var(--text-primary);
+    letter-spacing: 0;
     line-height: 1.2;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .chart-stat-label {
@@ -631,37 +1001,19 @@ body {
 }
 
 .widget {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 20px;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 22px;
+    padding: 22px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-}
-
-.widget::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--gradient-primary);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    box-shadow: 0 10px 30px rgba(45, 51, 32, 0.08);
 }
 
 .widget:hover {
-    border-color: var(--border-glow);
-    box-shadow: var(--shadow-glow);
-    transform: translateY(-2px);
-}
-
-.widget:hover::before {
-    opacity: 1;
+    box-shadow: 0 16px 40px rgba(45, 51, 32, 0.12);
+    transform: translateY(-3px);
 }
 
 .widget-header h4 {
@@ -679,13 +1031,11 @@ body {
 }
 
 .widget-value {
-    font-size: 1.8rem;
-    font-weight: 800;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1.2;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0;
+    line-height: 1.1;
 }
 
 .widget-label {
@@ -698,10 +1048,12 @@ body {
    Inserimento Layout - Full Width
    ========================================== */
 .inserimento-fullwidth {
-    padding: 24px;
+    padding: 8px 24px 24px;
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .card-fullwidth {
@@ -903,7 +1255,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    padding: 24px;
+    padding: 8px 24px 24px;
 }
 
 /* ==========================================
@@ -911,9 +1263,10 @@ body {
    ========================================== */
 .card {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    border: none;
+    border-radius: 26px;
     padding: 24px;
+    box-shadow: 0 10px 30px rgba(45, 51, 32, 0.08);
 }
 
 .card-header {
@@ -1529,31 +1882,44 @@ body {
 }
 
 .toggle-group {
-    display: flex;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
     background: var(--bg-card);
-    border-radius: var(--radius-md);
+    border-radius: 999px;
     padding: 4px;
-    border: 1px solid var(--border-light);
+    border: 1.5px solid rgba(27, 27, 24, 0.15);
 }
 
 .toggle-btn {
-    padding: 8px 16px;
+    padding: 8px 18px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
-}
-
-.toggle-btn:hover {
     color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: all 0.18s ease;
 }
 
+.toggle-btn:hover:not(.active) {
+    color: var(--text-secondary);
+}
+
+/* bolla nera arrotondata sul selezionato (stile "Latest Scores") */
 .toggle-btn.active {
-    background: var(--accent);
-    color: white;
+    background: var(--bg-sidebar);
+    color: var(--bg-body);
+}
+
+/* Dark mode: inverte il selezionato (bolla chiara + testo scuro),
+   altrimenti scuro-su-scuro diventa un blocco nero illeggibile */
+[data-theme="dark"] .toggle-btn.active,
+[data-theme="dark"] .chart-filter-chips .filter-btn.active {
+    background: #ece9dd;
+    color: #16181a;
 }
 
 .stat-card {
@@ -1843,27 +2209,39 @@ body {
 /* ==========================================
    Calendar View
    ========================================== */
-.calendario-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+/* Container del calendario: riempie l'altezza disponibile, niente scroll */
+.calendario-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 4px;
 }
 
-@media (max-width: 1200px) {
+.calendario-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px 12px;
+    align-content: start;
+}
+
+@media (max-width: 1100px) {
+    .calendario-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
     .calendario-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 560px) {
     .calendario-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .calendario-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -1871,17 +2249,18 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 12px;
+    padding: 8px;
+    min-height: 0;
 }
 
 .calendario-month-header {
     text-align: center;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--text-primary);
-    padding-bottom: 10px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border-light);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .calendario-weekdays {
@@ -1910,7 +2289,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     color: var(--text-secondary);
     border-radius: 50%;
     position: relative;
@@ -1941,10 +2320,11 @@ body {
 .calendario-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
-    margin-bottom: 20px;
-    padding: 12px 16px;
+    flex-shrink: 0;
+    margin-bottom: 10px;
+    padding: 8px 14px;
     background: var(--bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
@@ -1964,23 +2344,21 @@ body {
     border-radius: 50%;
 }
 
-/* Year Selector */
-.calendario-year-selector {
+/* Year Selector (nella barra del titolo del calendario) */
+.calendario-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
 }
 
 .calendario-nav-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 1px solid var(--border-color);
     background: var(--bg-card);
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -1995,8 +2373,8 @@ body {
 }
 
 .calendario-year-select {
-    padding: 10px 24px;
-    font-size: 1.25rem;
+    padding: 8px 16px;
+    font-size: 1.05rem;
     font-weight: 600;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -2009,4 +2387,350 @@ body {
 .calendario-year-select:focus {
     outline: none;
     border-color: var(--accent-primary);
+}
+
+/* ==========================================
+   Home — mosaico bento (7 blocchi, placeholder)
+   ========================================== */
+.home-bento {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1fr;
+    grid-template-rows: minmax(240px, 1fr) minmax(200px, 1.3fr) minmax(110px, 0.7fr);
+    grid-template-areas:
+        "b1 b2 b2"
+        "b1 b3 b4"
+        "b5 b6 b7";
+    gap: 18px;
+    padding: 8px 24px 24px;
+    overflow: auto;
+}
+
+.bento-b1 { grid-area: b1; }
+.bento-b2 { grid-area: b2; }
+.bento-b3 { grid-area: b3; }
+.bento-b4 { grid-area: b4; }
+.bento-b5 { grid-area: b5; }
+.bento-b6 { grid-area: b6; }
+.bento-b7 { grid-area: b7; }
+
+/* Blocco vuoto neutro, pronto da riempire */
+.bento-block {
+    position: relative;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    min-height: 0;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.bento-block:hover {
+    box-shadow: var(--shadow-card);
+}
+
+.bento-num {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+@media (max-width: 1000px) {
+    .home-bento {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "b1 b1"
+            "b2 b2"
+            "b3 b4"
+            "b5 b6"
+            "b7 b7";
+    }
+
+    .bento-block {
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 600px) {
+    .home-bento {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "b1" "b2" "b3" "b4" "b5" "b6" "b7";
+    }
+}
+
+/* ==========================================
+   Home slot 2 — Next Measure
+   ========================================== */
+.nm-card {
+    background:
+        radial-gradient(130% 100% at 88% -15%, rgba(205, 220, 57, 0.65), transparent 55%),
+        linear-gradient(150deg, #cdd6a0 0%, var(--soft-green) 60%, #c3cf9a 100%);
+    border: none;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .nm-card {
+    background:
+        radial-gradient(130% 100% at 88% -15%, rgba(140, 154, 78, 0.35), transparent 55%),
+        linear-gradient(150deg, #2a2e20 0%, #232619 60%, #1f2216 100%);
+}
+
+.nm-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.nm-titlewrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nm-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.nm-sub {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.nm-date-badge {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.nm-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.nm-rooms {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.nm-room {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 14px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.nm-room-name {
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-secondary);
+}
+
+.nm-input {
+    width: 100%;
+    padding: 8px 10px;
+}
+
+.nm-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.nm-day {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+/* Offseason */
+.nm-offseason {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.16);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .nm-offseason {
+    background: rgba(27, 29, 24, 0.28);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.nm-offseason-icon {
+    font-size: 2rem;
+}
+
+.nm-offseason-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.nm-offseason-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    max-width: 380px;
+}
+
+@media (max-width: 760px) {
+    .nm-rooms {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Import in modale: layout a colonna singola, card "piatte" per stare
+   dentro la finestra senza scatole annidate e ben centrate */
+#modal-import .modal-content {
+    max-width: 540px;
+}
+
+#modal-import .import-layout {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 18px;
+}
+
+#modal-import .card {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+#modal-import .card-import {
+    min-height: 200px;
+}
+
+#modal-import .card-preview {
+    margin-top: 18px;
+}
+
+/* ==========================================
+   Dashboard — segnalibri verticali (cambio grafico)
+   ========================================== */
+/* Segnalibri verticali scuri, sul nero al bordo destro della sidebar.
+   Posizione fissa: escono dalla zona scura (larghezza sidebar 230px + margine
+   app 16px) e sporgono un po' sulla schermata bianca. */
+.chart-bookmarks {
+    position: fixed;
+    /* Bordo destro delle linguette = fine sidebar (margine app 16 + sidebar 230 = 246);
+       larghezza linguetta 46 -> left 200 */
+    left: 200px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bookmark-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: var(--bg-sidebar);
+    color: #8d8d84;
+    border-radius: 13px 0 0 13px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: -2px 3px 10px rgba(0, 0, 0, 0.18);
+}
+
+.bookmark-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.bookmark-btn:hover {
+    color: #ffffff;
+    transform: translateX(-3px);
+}
+
+.bookmark-btn.active {
+    color: var(--accent-lime);
+    box-shadow: inset -3px 0 0 var(--accent-lime), 2px 3px 12px rgba(0, 0, 0, 0.22),
+        0 0 16px rgba(205, 220, 57, 0.22);
+}
+
+/* Tooltip con il nome della vista (a destra dell'icona, al passaggio del mouse) */
+.bookmark-label {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    white-space: nowrap;
+    background: var(--text-primary);
+    color: var(--bg-card);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    z-index: 30;
+}
+
+.bookmark-btn:hover .bookmark-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Controlli extra del grafico allineati a destra */
+#dashboard .chart-filter-bar {
+    justify-content: flex-end;
 }

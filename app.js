@@ -5,7 +5,7 @@
 // Utility Functions
 const formatDate = (date) => {
     const d = new Date(date);
-    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const parseDate = (str) => {
@@ -117,18 +117,9 @@ let selectedStanze = [...stanze];
 let showTotale = true;
 let mainChart = null;
 
-// Toast Notification
+// Toast Notification (disabilitate su richiesta: nessuna notifica in basso a destra)
 const showToast = (message, type = 'success') => {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    // no-op
 };
 
 // Navigation
@@ -138,21 +129,44 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById(tab.dataset.section).classList.add('active');
+
+        // Calendar ora è una sezione a sé: renderizza all'apertura
+        if (tab.dataset.section === 'calendario') {
+            renderCalendario(selectedCalendarioYear);
+            updateCalendarioStats();
+        }
+        // La Dashboard non è più attiva di default: ridisegna il grafico all'apertura
+        if (tab.dataset.section === 'dashboard') {
+            updateChart();
+        }
+        // Home: aggiorna lo slot "Next Measure"
+        if (tab.dataset.section === 'home') {
+            renderNextMeasure();
+        }
     });
 });
 
 // Theme Toggle (Light/Dark Mode)
+// Sole stilizzato: con raggi (chiaro) / senza raggi (scuro)
+const SUN_RAYS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1.5" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22.5"></line><line x1="1.5" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22.5" y2="12"></line><line x1="4.4" y1="4.4" x2="6.1" y2="6.1"></line><line x1="17.9" y1="17.9" x2="19.6" y2="19.6"></line><line x1="4.4" y1="19.6" x2="6.1" y2="17.9"></line><line x1="17.9" y1="6.1" x2="19.6" y2="4.4"></line></svg>`;
+const SUN_PLAIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle></svg>`;
+
+const setThemeIcon = (theme) => {
+    const el = document.getElementById('theme-icon');
+    if (el) el.innerHTML = theme === 'dark' ? SUN_PLAIN : SUN_RAYS;
+};
+
 const savedTheme = storage.get('theme', 'light');
 document.documentElement.setAttribute('data-theme', savedTheme);
-document.getElementById('theme-icon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+setThemeIcon(savedTheme);
 
 document.getElementById('btn-toggle-theme').addEventListener('click', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
-    document.getElementById('theme-icon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    setThemeIcon(newTheme);
     storage.set('theme', newTheme);
-    showToast(newTheme === 'dark' ? 'Tema scuro attivato' : 'Tema chiaro attivato');
+    showToast(newTheme === 'dark' ? 'Dark theme on' : 'Light theme on');
 });
 
 // Heating Toggle
@@ -166,6 +180,35 @@ const updateHeatingUI = () => {
     if (btn) {
         heatingOn ? btn.classList.add('active') : btn.classList.remove('active');
     }
+    // Sidebar status card
+    const sideDot = document.getElementById('sidebar-heating-dot');
+    const sideLabel = document.getElementById('sidebar-heating-label');
+    if (sideDot) {
+        heatingOn ? sideDot.classList.add('on') : sideDot.classList.remove('on');
+    }
+    if (sideLabel) {
+        sideLabel.textContent = heatingOn ? 'Heating on' : 'Heating off';
+    }
+};
+
+// Aggiorna data, chip e stagione corrente nella topbar/sidebar
+const updateHeaderInfo = () => {
+    const setText = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+    const dateEl = document.getElementById('topbar-date');
+    if (dateEl) {
+        const oggi = new Date().toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+        dateEl.textContent = 'Today is ' + oggi;
+    }
+
+    setText('chip-letture', letture.length);
+    const stagioni = new Set(letture.map(l => l.stagione || getStagione(l.data)));
+    setText('chip-stagioni', stagioni.size);
+
+    const currentStagione = getStagione(new Date());
+    setText('sidebar-season-label', 'Season ' + currentStagione);
 };
 
 const heatingToggleBtn = document.getElementById('btn-toggle-heating-topbar');
@@ -176,7 +219,7 @@ if (heatingToggleBtn) {
         heatingEvents.push({ date: new Date().toISOString(), type: heatingOn ? 'on' : 'off' });
         storage.set('heatingEvents', heatingEvents);
         updateHeatingUI();
-        showToast(heatingOn ? 'Riscaldamento acceso' : 'Riscaldamento spento');
+        showToast(heatingOn ? 'Heating on' : 'Heating off');
     });
 }
 
@@ -269,9 +312,9 @@ const populateFilters = () => {
 let showStimaInDashboard = false; // Toggle between confronto and stima
 let selectedStimaAnno = null;
 
-document.querySelectorAll('.filter-btn[data-chart-type]').forEach(btn => {
+document.querySelectorAll('.bookmark-btn[data-chart-type]').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-chart-type]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn[data-chart-type]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentChartType = btn.dataset.chartType;
 
@@ -342,7 +385,7 @@ const updateWidgets = () => {
         const consumo = stanze.reduce((sum, s) => sum + ((last[s] || 0) - (first[s] || 0)), 0);
         document.getElementById('consumo-anno-corrente').textContent = consumo.toFixed(1);
     }
-    document.getElementById('label-anno-corrente').textContent = `Stagione ${currentStagione}`;
+    document.getElementById('label-anno-corrente').textContent = `Season ${currentStagione}`;
 
     // Giorni riscaldamento
     const onEvents = heatingEvents.filter(e => e.type === 'on' && (getStagione(e.date) === currentStagione));
@@ -353,7 +396,9 @@ const updateWidgets = () => {
         giorni += Math.ceil((endDate - new Date(ev.date)) / (1000 * 60 * 60 * 24));
     });
     document.getElementById('giorni-riscaldamento').textContent = giorni;
-    document.getElementById('label-stagione').textContent = `Stagione ${currentStagione}`;
+    document.getElementById('label-stagione').textContent = `Season ${currentStagione}`;
+    const chipGiorni = document.getElementById('chip-giorni');
+    if (chipGiorni) chipGiorni.textContent = giorni;
 
     // Media giornaliera
     if (stagLetture.length >= 2 && giorni > 0) {
@@ -366,7 +411,7 @@ const updateWidgets = () => {
 };
 
 // Chart rendering
-const MONTHS = ['Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag'];
+const MONTHS = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
 let selectedClimaAnno = null;
 let temperaturesCache = {};
 
@@ -397,7 +442,7 @@ const fetchTemperatures = async (year) => {
 };
 
 // Extended MONTHS array for full year (Aug to Jul)
-const MONTHS_FULL = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug'];
+const MONTHS_FULL = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
 
 // Get month index for full year (Aug=0, Sep=1, ..., Jul=11)
 const getSeasonMonth = (date) => {
@@ -481,9 +526,9 @@ const renderCalendario = (year = selectedCalendarioYear) => {
     const container = document.getElementById('calendario-container');
     if (!container) return;
 
-    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-    const weekDays = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     // Get readings by date for quick lookup
     const readingsByDate = {};
@@ -510,18 +555,19 @@ const renderCalendario = (year = selectedCalendarioYear) => {
         }
     });
 
-    // Year selector at top center
-    let html = `
-    <div class="calendario-year-selector">
+    // Year selector → nella barra del titolo (chart-header)
+    const controls = document.getElementById('calendario-controls');
+    if (controls) {
+        controls.innerHTML = `
         <button class="calendario-nav-btn" id="btn-prev-year">◀</button>
         <select id="calendario-anno-inline" class="calendario-year-select">
             ${sortedYears.map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('')}
         </select>
-        <button class="calendario-nav-btn" id="btn-next-year">▶</button>
-    </div>`;
+        <button class="calendario-nav-btn" id="btn-next-year">▶</button>`;
+    }
 
     // Legend
-    html += `<div class="calendario-legend">
+    let html = `<div class="calendario-legend">
         <span style="font-weight: 600; margin-right: 8px;">Legenda:</span>
         ${Object.entries(legendColors).map(([stagione, color]) =>
         `<div class="legend-item">
@@ -619,21 +665,10 @@ const updateChart = async () => {
     const climaSelector = document.getElementById('clima-anno-selector');
     climaSelector.style.display = currentChartType === 'clima' ? 'block' : 'none';
 
-    // Show/hide canvas vs calendario
+    // Il canvas del grafico è sempre visibile nella dashboard
+    // (il calendario è ora una sezione separata)
     const canvas = document.getElementById('chart-main');
-    const calendarioContainer = document.getElementById('calendario-container');
-    if (currentChartType === 'calendario') {
-        canvas.style.display = 'none';
-        calendarioContainer.style.display = 'block';
-        renderCalendario(selectedCalendarioYear);
-        updateCalendarioStats();
-        document.getElementById('stat-totale').textContent = '-';
-        document.getElementById('stat-media').textContent = '-';
-        return;
-    } else {
-        canvas.style.display = 'block';
-        calendarioContainer.style.display = 'none';
-    }
+    if (canvas) canvas.style.display = 'block';
 
     const filtered = letture.filter(l => selectedAnni.includes(l.stagione || getStagione(l.data)));
     if (filtered.length === 0) {
@@ -707,7 +742,7 @@ const updateChart = async () => {
                 labels = sampleIndices.map(i => {
                     const d = allDailyData[firstAnno][i];
                     if (d) {
-                        return d.date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+                        return d.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
                     }
                     return '';
                 });
@@ -778,7 +813,7 @@ const updateChart = async () => {
         });
 
         datasets.push({
-            label: 'Media Giornaliera',
+            label: 'Daily Average',
             data: dailyAverage,
             borderColor: '#e8673c',
             backgroundColor: 'rgba(232, 103, 60, 0.1)',
@@ -811,7 +846,7 @@ const updateChart = async () => {
         });
 
         datasets.push({
-            label: 'Variazione %',
+            label: 'Variation %',
             data: variazioni,
             borderColor: '#3b82f6',
             backgroundColor: variazioni.map(v => v >= 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.6)'),
@@ -907,7 +942,7 @@ const updateChart = async () => {
                 // For current year, stop temperature at today
                 if (isCurrentYear && date > today) break;
 
-                tempLabels.push(date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }));
+                tempLabels.push(date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
 
                 // Average of the week
                 let weekSum = 0, weekCount = 0;
@@ -948,7 +983,7 @@ const updateChart = async () => {
             // Temperature line
             datasets.push({
                 type: 'line',
-                label: `Temperatura ${anno}`,
+                label: `Temperature ${anno}`,
                 data: tempData,
                 borderColor: '#0ea5e9',
                 backgroundColor: 'rgba(14, 165, 233, 0.1)',
@@ -963,7 +998,7 @@ const updateChart = async () => {
             // Daily consumption estimation bars (weekly aggregated)
             datasets.push({
                 type: 'bar',
-                label: `Stima Consumo ${anno}`,
+                label: `Estimated Consumption ${anno}`,
                 data: consumoData,
                 backgroundColor: getStagioneColor(anno) + 'aa',
                 borderColor: getStagioneColor(anno),
@@ -1094,7 +1129,7 @@ const updateChart = async () => {
                 display: currentChartType !== 'periodi',
                 beginAtZero: true,
                 grid: { color: 'rgba(0,0,0,0.05)' },
-                title: { display: currentChartType === 'clima', text: 'Consumo' },
+                title: { display: currentChartType === 'clima', text: 'Consumption' },
                 position: 'left',
                 max: currentChartType === 'periodi' ? 1.5 : undefined
             },
@@ -1118,7 +1153,7 @@ const updateChart = async () => {
     if (currentChartType === 'periodi') {
         // Days cumulative from Aug 1: Ago=0, Set=31, Ott=61, Nov=92, Dic=122, Gen=153, Feb=184, Mar=212, Apr=243, Mag=273, Giu=304, Lug=334
         const monthStarts = [0, 31, 61, 92, 122, 153, 184, 212, 243, 273, 304, 334, 365];
-        const monthLabels = ['Ago', 'Set', 'Ott', 'Nov', 'Dic', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago'];
+        const monthLabels = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
 
         chartOptions.indexAxis = 'y'; // Horizontal bars
         chartOptions.scales = {
@@ -1154,7 +1189,7 @@ const updateChart = async () => {
         chartOptions.plugins.tooltip.callbacks.label = (ctx) => {
             const period = heatingPeriods[ctx.datasetIndex];
             if (!period) return '';
-            const formatDate = (d) => new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+            const formatDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
             return `${formatDate(period.start)} → ${formatDate(period.end)}`;
         };
     }
@@ -1185,7 +1220,7 @@ const renderTable = () => {
             <td class="heating-status-cell"><div class="heating-bar ${isHeating ? 'on' : 'off'}"></div></td>
             <td class="col-stagione"><span class="stagione-badge" style="background: ${getStagioneColor(stagione)}">${stagione}</span></td>
             <td class="col-data">${formatDate(l.data)}</td>
-            <td class="col-durata">${giorni}g</td>
+            <td class="col-durata">${giorni}d</td>
             <td class="col-temp">${l.tempExt ? l.tempExt.toFixed(1) + '°' : '-'}</td>
             ${stanze.map(s => `<td class="col-stanza">${(l[s] || 0).toFixed(1)}</td>`).join('')}
             <td class="col-tot">${totale.toFixed(1)}</td>
@@ -1200,7 +1235,7 @@ const renderTable = () => {
     // Delete handlers
     tbody.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async () => {
-            if (confirm('Eliminare questa lettura?')) {
+            if (confirm('Delete this reading?')) {
                 const idx = parseInt(btn.dataset.idx);
                 const deletedItem = letture[idx];
 
@@ -1215,7 +1250,7 @@ const renderTable = () => {
                 renderTable();
                 updateChart();
                 updateWidgets();
-                showToast('Lettura eliminata');
+                showToast('Reading deleted');
             }
         });
     });
@@ -1231,7 +1266,7 @@ document.getElementById('btn-nuova-riga').addEventListener('click', async () => 
     letture.push(nuova);
     await saveLetture();
     renderTable();
-    showToast('Nuova riga aggiunta');
+    showToast('New row added');
 });
 
 // Settings Modal
@@ -1245,21 +1280,30 @@ document.getElementById('close-settings').addEventListener('click', () => {
     document.getElementById('modal-settings').classList.remove('show');
 });
 
+// Import Modal (aperto dal bottone tondo in topbar)
+document.getElementById('btn-import-topbar')?.addEventListener('click', () => {
+    document.getElementById('modal-import').classList.add('show');
+});
+
+document.getElementById('close-import')?.addEventListener('click', () => {
+    document.getElementById('modal-import').classList.remove('show');
+});
+
 document.getElementById('btn-salva-posizione').addEventListener('click', () => {
     settings.lat = parseFloat(document.getElementById('setting-lat').value);
     settings.lng = parseFloat(document.getElementById('setting-lng').value);
     storage.set('settings', settings);
-    showToast('Posizione salvata');
+    showToast('Location saved');
 });
 
 document.getElementById('btn-pulisci-cache-meteo').addEventListener('click', () => {
     weatherCache = {};
     storage.set('weatherCache', weatherCache);
-    showToast('Cache meteo pulita');
+    showToast('Weather cache cleared');
 });
 
 document.getElementById('btn-elimina-tutti').addEventListener('click', () => {
-    if (confirm('Eliminare TUTTI i dati? Questa azione è irreversibile!')) {
+    if (confirm('Delete ALL data? This action is irreversible!')) {
         localStorage.clear();
         location.reload();
     }
@@ -1288,7 +1332,7 @@ document.getElementById('btn-esporta-json').addEventListener('click', () => {
 // Manual Sync Handler
 document.getElementById('btn-sync-firebase').addEventListener('click', async () => {
     if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
-        showToast('Firebase non configurato o non inizializzato', 'error');
+        showToast('Firebase not configured or not initialized', 'error');
         return;
     }
 
@@ -1306,10 +1350,10 @@ document.getElementById('btn-sync-firebase').addEventListener('click', async () 
         const hpPromises = heatingPeriods.map(p => window.FirebaseService.saveHeatingPeriod(p));
         await Promise.all(hpPromises);
 
-        showToast(`Sincronizzati ${letture.length} letture e ${heatingPeriods.length} periodi`);
+        showToast(`Synced ${letture.length} readings and ${heatingPeriods.length} periods`);
     } catch (e) {
         console.error(e);
-        showToast('Errore durante la sincronizzazione', 'error');
+        showToast('Sync error', 'error');
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -1338,8 +1382,8 @@ const renderHeatingHistory = () => {
         return `
         <tr>
             <td>${formatDate(ev.date)}</td>
-            <td><span class="event-badge ${ev.type}">${ev.type === 'on' ? '🔥 Acceso' : '❄️ Spento'}</span></td>
-            <td>${ev.type === 'on' ? durata + ' giorni' : '-'}</td>
+            <td><span class="event-badge ${ev.type}">${ev.type === 'on' ? 'On' : 'Off'}</span></td>
+            <td>${ev.type === 'on' ? durata + ' days' : '-'}</td>
             <td><button class="btn-icon btn-delete-event" data-idx="${heatingEvents.indexOf(ev)}">🗑️</button></td>
         </tr>`;
     }).join('');
@@ -1424,11 +1468,13 @@ document.getElementById('btn-conferma-import').addEventListener('click', async (
     await saveLetture();
     pendingImport = [];
     document.getElementById('preview-import').style.display = 'none';
+    document.getElementById('modal-import').classList.remove('show');
     populateFilters();
     updateChart();
     updateWidgets();
     renderTable();
-    showToast(`${count} letture importate`);
+    renderNextMeasure();
+    showToast(`${count} readings imported`);
 });
 
 document.getElementById('btn-annulla-import').addEventListener('click', () => {
@@ -1484,7 +1530,7 @@ const renderHeatingPeriods = () => {
     if (!list) return;
 
     if (heatingPeriods.length === 0) {
-        list.innerHTML = '<div class="heating-periods-empty">Nessun periodo di riscaldamento inserito</div>';
+        list.innerHTML = '<div class="heating-periods-empty">No heating periods added</div>';
         return;
     }
 
@@ -1496,7 +1542,7 @@ const renderHeatingPeriods = () => {
         // Se end è null, il periodo è in corso
         const endDate = p.end ? new Date(p.end) : new Date();
         const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-        const endLabel = p.end ? formatDate(p.end) : '🔥 In corso';
+        const endLabel = p.end ? formatDate(p.end) : 'Ongoing';
 
         return `
         <div class="heating-period-item">
@@ -1524,7 +1570,7 @@ const renderHeatingPeriods = () => {
             renderHeatingPeriods();
             renderScatterChart();
             renderTable();
-            showToast('Periodo eliminato');
+            showToast('Period deleted');
         });
     });
 };
@@ -1537,12 +1583,12 @@ if (addHeatingPeriodBtn) {
         const endInput = document.getElementById('heating-end-date');
 
         if (!startInput.value || !endInput.value) {
-            showToast('Inserisci entrambe le date', 'error');
+            showToast('Enter both dates', 'error');
             return;
         }
 
         if (new Date(startInput.value) > new Date(endInput.value)) {
-            showToast('La data di accensione deve essere prima dello spegnimento', 'error');
+            showToast('Start date must be before end date', 'error');
             return;
         }
 
@@ -1563,7 +1609,7 @@ if (addHeatingPeriodBtn) {
         renderHeatingPeriods();
         renderScatterChart();
         renderTable();
-        showToast('Periodo aggiunto');
+        showToast('Period added');
     });
 }
 
@@ -1642,7 +1688,7 @@ const renderScatterChart = () => {
         data: {
             datasets: [
                 {
-                    label: 'Con Riscaldamento',
+                    label: 'With Heating',
                     data: heatingOnData,
                     backgroundColor: '#22c55e',
                     borderColor: '#16a34a',
@@ -1650,7 +1696,7 @@ const renderScatterChart = () => {
                     pointHoverRadius: 8
                 },
                 {
-                    label: 'Senza Riscaldamento',
+                    label: 'Without Heating',
                     data: heatingOffData,
                     backgroundColor: '#ef4444',
                     borderColor: '#dc2626',
@@ -1689,7 +1735,7 @@ const renderScatterChart = () => {
                 y: {
                     title: {
                         display: true,
-                        text: 'Lettura Totale'
+                        text: 'Total Reading'
                     },
                     grid: { color: 'rgba(0,0,0,0.05)' }
                 }
@@ -1699,8 +1745,134 @@ const renderScatterChart = () => {
 };
 
 // Initialize
+// ==========================================
+// Home slot 2 — Next Measure (prossima lettura)
+// Letture di domenica ogni 2 settimane, dalla prima domenica dopo
+// l'accensione (inizio periodo) fino allo spegnimento (fine periodo).
+// ==========================================
+const ROOM_LABELS = {
+    cucina: 'Cucina', soggiorno: 'Soggiorno', camera: 'Camera',
+    cameretta: 'Cameretta', bagno: 'Bagno'
+};
+
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const parseYMD = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+
+// Calcola la prossima domenica di lettura tra tutti i periodi di riscaldamento
+const getNextMeasure = () => {
+    if (!heatingPeriods || heatingPeriods.length === 0) return { status: 'offseason' };
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    // Un periodo senza spegnimento (end=null) è considerato chiuso dopo la durata
+    // massima plausibile di una stagione, così d'estate scatta l'Offseason anche
+    // se lo spegnimento non è stato registrato.
+    const MAX_SEASON_DAYS = 210;
+
+    const candidates = [];
+    heatingPeriods.forEach(p => {
+        if (!p.start) return;
+        const start = parseYMD(p.start);
+        let end;
+        if (p.end) {
+            end = parseYMD(p.end);
+        } else {
+            end = new Date(start);
+            end.setDate(end.getDate() + MAX_SEASON_DAYS);
+        }
+
+        // Prima domenica >= accensione
+        const firstSun = new Date(start);
+        firstSun.setDate(firstSun.getDate() + ((7 - firstSun.getDay()) % 7));
+
+        // Sequenza ogni 14 giorni fino allo spegnimento: primo slot >= oggi
+        let d = new Date(firstSun);
+        for (let i = 0; i < 40; i++) {
+            if (end && d > end) break;
+            if (d >= today) { candidates.push(new Date(d)); break; }
+            d.setDate(d.getDate() + 14);
+        }
+    });
+
+    if (candidates.length === 0) return { status: 'offseason' };
+    candidates.sort((a, b) => a - b);
+    const next = candidates[0];
+    const daysUntil = Math.round((next - today) / 86400000);
+    return { status: 'in-season', date: next, daysUntil };
+};
+
+const renderNextMeasure = () => {
+    const badge = document.getElementById('nm-date-badge');
+    const body = document.getElementById('nm-body');
+    const sub = document.getElementById('nm-sub');
+    if (!body) return;
+
+    const nm = getNextMeasure();
+
+    if (nm.status === 'offseason') {
+        if (badge) badge.textContent = 'Offseason';
+        if (sub) sub.textContent = 'Fuori stagione';
+        body.innerHTML = `
+            <div class="nm-offseason">
+                <div class="nm-offseason-icon">☀️</div>
+                <p class="nm-offseason-title">Offseason</p>
+                <p class="nm-offseason-text">Non è periodo di letture. Le misurazioni riprenderanno con l'accensione del riscaldamento.</p>
+            </div>`;
+        return;
+    }
+
+    const d = nm.date;
+    const measureDateStr = ymd(d);
+    if (badge) badge.textContent = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (sub) {
+        sub.textContent = nm.daysUntil <= 0 ? 'Oggi'
+            : nm.daysUntil === 1 ? 'Domani'
+                : `Tra ${nm.daysUntil} giorni`;
+    }
+
+    body.innerHTML = `
+        <div class="nm-rooms">
+            ${stanze.map(s => `
+                <label class="nm-room">
+                    <span class="nm-room-name">${ROOM_LABELS[s] || s}</span>
+                    <input type="number" step="0.1" min="0" data-stanza="${s}" class="input-dark nm-input" placeholder="0">
+                </label>`).join('')}
+        </div>
+        <div class="nm-foot">
+            <span class="nm-day">${d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            <button class="btn-primary" id="nm-save">Salva lettura</button>
+        </div>`;
+
+    document.getElementById('nm-save')?.addEventListener('click', async () => {
+        const inputs = body.querySelectorAll('input[data-stanza]');
+        const nuova = { data: measureDateStr, stagione: getStagione(measureDateStr) };
+        let any = false;
+        inputs.forEach(inp => {
+            const v = parseFloat(inp.value);
+            nuova[inp.dataset.stanza] = isNaN(v) ? 0 : v;
+            if (!isNaN(v)) any = true;
+        });
+        if (!any) { showToast('Inserisci almeno un valore', 'error'); return; }
+        letture.push(nuova);
+        await saveLetture();
+        renderTable();
+        updateHeaderInfo();
+        renderNextMeasure();
+        showToast('Lettura salvata');
+    });
+};
+
 const init = async () => {
     updateHeatingUI();
+
+    // Render immediato con i dati già in localStorage, così il grafico non resta
+    // vuoto mentre si attendono Firebase/server (che possono essere lenti).
+    if (letture.length > 0) {
+        populateFilters();
+        updateChart();
+        updateWidgets();
+        updateHeaderInfo();
+    }
+
     let loadedFromFirebase = false;
 
     // 1. Prova a caricare da Firebase
@@ -1761,10 +1933,17 @@ const init = async () => {
     populateFilters();
     updateChart();
     updateWidgets();
+    updateHeaderInfo();
     renderTable();
     renderHeatingPeriods();
     renderScatterChart();
     initDettaglio();
+    renderNextMeasure();
+
+    // Ridisegna il grafico dopo che il layout si è stabilizzato (evita il grafico
+    // vuoto al primo caricamento finché non si interagisce).
+    requestAnimationFrame(() => updateChart());
+    setTimeout(() => updateChart(), 250);
 };
 
 // ==========================================
@@ -1817,7 +1996,7 @@ const renderDettaglio = () => {
     const sorted = [...yearData].sort((a, b) => new Date(a.data) - new Date(b.data));
 
     if (sorted.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;">Nessuna lettura per questa stagione</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;">No readings for this season</td></tr>';
         tfoot.innerHTML = '';
         return;
     }
@@ -1894,7 +2073,7 @@ const updateStimaChart = async (readings) => {
         document.getElementById('stima-media').textContent = '-';
         document.getElementById('stima-max').textContent = '-';
         document.getElementById('stima-totale').textContent = '-';
-        document.getElementById('stima-info').textContent = 'Dati insufficienti';
+        document.getElementById('stima-info').textContent = 'Insufficient data';
         return;
     }
 
@@ -1914,8 +2093,8 @@ const updateStimaChart = async (readings) => {
     const useWeighted = temps && temps.time && temps.temperature_2m_mean;
 
     document.getElementById('stima-info').textContent = useWeighted
-        ? 'Interpolazione pesata su temperatura'
-        : 'Interpolazione lineare tra letture';
+        ? 'Temperature-weighted interpolation'
+        : 'Linear interpolation between readings';
 
     for (let i = 1; i < sorted.length; i++) {
         const prev = sorted[i - 1];
@@ -1966,7 +2145,7 @@ const updateStimaChart = async (readings) => {
 
                 dayTemps.push({
                     date: dateStr,
-                    label: date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+                    label: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
                     temp: temp !== null ? temp : 10, // Default 10°C if unknown
                     isReading: d === days - 1
                 });
@@ -1996,7 +2175,7 @@ const updateStimaChart = async (readings) => {
                 date.setDate(date.getDate() + d);
                 dailyData.push({
                     date: date.toISOString().split('T')[0],
-                    label: date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+                    label: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
                     value: dailyRate,
                     isReading: d === days - 1
                 });
@@ -2024,7 +2203,7 @@ const updateStimaChart = async (readings) => {
         data: {
             labels: dailyData.map(d => d.label),
             datasets: [{
-                label: 'Consumo Giornaliero Stimato',
+                label: 'Estimated Daily Consumption',
                 data: dailyData.map(d => d.value),
                 backgroundColor: dailyData.map(d => {
                     if (d.isReading) return 'rgba(232, 103, 60, 1)';
@@ -2047,7 +2226,7 @@ const updateStimaChart = async (readings) => {
                     callbacks: {
                         label: (ctx) => {
                             const d = dailyData[ctx.dataIndex];
-                            let label = `${ctx.parsed.y.toFixed(2)} unità`;
+                            let label = `${ctx.parsed.y.toFixed(2)} units`;
                             if (d.temp !== undefined) {
                                 label += ` @ ${d.temp.toFixed(1)}°C`;
                             }
@@ -2059,7 +2238,7 @@ const updateStimaChart = async (readings) => {
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: 'Consumo/giorno' }
+                    title: { display: true, text: 'Consumption/day' }
                 },
                 x: {
                     grid: { display: false },
@@ -2071,4 +2250,19 @@ const updateStimaChart = async (readings) => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
+// Fix: al primo caricamento il grafico può disegnarsi su un contenitore non ancora
+// dimensionato (i webfont si caricano dopo e causano re-layout), risultando vuoto
+// finché non si interagisce. Forziamo un resize quando layout e font sono pronti.
+const redrawCharts = () => {
+    // Ricrea il grafico principale (un semplice resize non basta se è stato
+    // creato su un contenitore non ancora dimensionato).
+    if (typeof updateChart === 'function') updateChart();
+    if (typeof scatterChart !== 'undefined' && scatterChart) scatterChart.resize();
+    if (typeof stimaChart !== 'undefined' && stimaChart) stimaChart.resize();
+};
+window.addEventListener('load', () => setTimeout(redrawCharts, 50));
+if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(redrawCharts);
+}
 
