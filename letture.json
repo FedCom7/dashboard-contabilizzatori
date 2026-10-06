@@ -1018,7 +1018,7 @@
   },
   {
     "data": "2025-04-27",
-    "stagione": "17/18",
+    "stagione": "24/25",
     "cucina": 270,
     "soggiorno": 1140,
     "camera": 166,
@@ -1087,23 +1087,5 @@
     "camera": 101,
     "cameretta": 86,
     "bagno": 154
-  },
-  {
-    "data": "2026-01-24",
-    "stagione": "25/26",
-    "cucina": 0,
-    "soggiorno": 0,
-    "camera": 0,
-    "cameretta": 0,
-    "bagno": 0
-  },
-  {
-    "data": "2026-01-24",
-    "stagione": "25/26",
-    "cucina": 0,
-    "soggiorno": 0,
-    "camera": 0,
-    "cameretta": 0,
-    "bagno": 0
   }
 ]

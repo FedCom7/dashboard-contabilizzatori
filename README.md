@@ -1,39 +1,55 @@
-# Dashboard Contabilizzatori
+# Heat Ledger — Dashboard Contabilizzatori
 
-Una dashboard interattiva per visualizzare e analizzare i consumi di riscaldamento registrati dai contabilizzatori.
+Dashboard per registrare le letture dei contabilizzatori di calore di casa e confrontare i consumi stagione per stagione.
 
-## Funzionalità
+## Viste
 
-- **Dashboard**: Panoramica dei consumi con grafici di andamento, confronto annuale e variazione.
-- **Inserimento**: Interfaccia per inserire nuove letture e gestire i periodi di riscaldamento.
-- **Dettaglio**: Tabelle e grafici dettagliati per ogni lettura.
-- **Import/Export**: Funzionalità per importare dati da CSV o esportare in JSON.
-- **Meteo**: Integrazione con dati meteo storici per correlare consumi e temperature.
+- **Overview** — stagione più recente (ritmo vs. media allo stesso giorno, proiezione se in corso), prossima lettura con inserimento rapido, "corsa delle stagioni" cumulata, totali per stagione (misurati o corretti per il clima), ripartizione per stanza.
+- **Seasons** — consumo corretto per i gradi-giorno ("meteo o abitudini?"), freddo vs. consumo, calendario dei periodi di riscaldamento, tabella riassuntiva.
+- **Rooms** — quote per stanza (barre 100%), small multiples per stanza, cambiamenti notevoli.
+- **Climate** — consumo settimanale stimato e temperatura esterna allineati, firma energetica (unità/giorno vs. temperatura, temperatura di "spegnimento"), calendario giornaliero.
+- **Readings** — periodi di riscaldamento, registro letture (contatore / variazione / al giorno), modifica ed eliminazione. Le letture sospette (forti aumenti a riscaldamento spento) sono segnalate con ⚠︎.
 
-## Utilizzo Online (GitHub Pages)
+## Metodo
 
-La dashboard è progettata per funzionare come sito statico. I dati vengono caricati dal file `data.js` che funge da database statico quando l'API server non è disponibile.
+- Le stagioni vanno dal 1 agosto al 31 luglio; i contatori ripartono da zero a ogni stagione.
+- **Gradi-giorno**: somma di `max(0, 20 °C − T media)` sui giorni di riscaldamento coperti dalle letture (base 20 °C, convenzione italiana). Temperature giornaliere dall'archivio storico [Open-Meteo](https://open-meteo.com/) per la posizione impostata.
+- **Consumo corretto per il clima**: `totale × gradi-giorno medi / gradi-giorno della stagione`.
+- **Stima giornaliera**: il consumo tra due letture viene distribuito sui giorni intermedi in proporzione ai gradi-giorno (zero fuori dai periodi di riscaldamento).
+- Una stagione è *completa* se le letture arrivano fino allo spegnimento; altrimenti è *parziale* e viene confrontata con le altre allo stesso giorno della stagione.
 
-Per aggiornare i dati:
-1. Modificare il file `data.js` inserendo le nuove letture o periodi di riscaldamento.
-2. Committare e pushare le modifiche su GitHub.
+- **Report** — resoconto di stagione scritto automaticamente (meteo, efficienza, picchi, stanze, letture), stampabile/PDF.
+- **Firme per stanza** (in Rooms) — sensibilità al freddo di ogni stanza e temperatura a cui smette di scaldare, stagione per stagione.
 
-## Sviluppo Locale
+## Telefono, promemoria, backup
 
-Per eseguire il progetto in locale con il server API (opzionale):
+- **Telefono**: Settings → *On your phone* mostra i QR code. In casa: l'indirizzo Wi‑Fi del server; ovunque: la versione GitHub Pages con Cloud sync. Poi *Condividi → Aggiungi alla schermata Home*. Il link `#new` apre subito l'inserimento.
+- **Promemoria**: *Add reminders* / *Reading reminders* scarica un file `.ics` con le domeniche di lettura (una ogni due settimane, avviso alle 9:00). Reimportandolo gli eventi si aggiornano, non si duplicano.
+- **Backup**: il server salva una copia datata in `backups/` prima di ogni modifica (ultime 100 per file); si ripristinano da Settings.
 
-1. Assicurarsi di avere [Node.js](https://nodejs.org/) installato.
-2. Installare le dipendenze (se presenti `package.json`):
-   ```bash
-   npm install
-   ```
-3. Avviare il server:
-   ```bash
-   node server.js
-   ```
-4. Aprire il browser su `http://localhost:3000`.
+## Cloud sync (Firebase)
 
-## Struttura Dati
+Configurazione una tantum nella console Firebase del progetto `dashboard-contabilizzatoti`:
 
-- `letture.json`: Database utilizzato dal server Node.js locale.
-- `data.js`: Fallback statico per l'utilizzo senza server (es. GitHub Pages).
+1. **Firestore Database → Create database** (posizione europea, production mode).
+2. **Authentication → Get started → Sign-in method → Email/Password**; poi **Users → Add user**.
+3. **Authentication → Settings → Authorized domains**: verificare `fedcom7.github.io`.
+4. Accedere da Settings → Cloud sync, copiare l'UID in `firestore.rules` al posto di `PASTE_YOUR_UID` e pubblicare le regole in **Firestore → Rules**.
+5. *Sync now*. Da quel momento, per chi ha fatto l'accesso, il cloud è la fonte principale e il server locale ne tiene una copia (con backup).
+
+## Avvio locale
+
+```bash
+node server.js
+```
+
+Poi aprire `http://localhost:3000`. Il server salva le letture in `letture.json` e i periodi di riscaldamento in `periods.json`.
+
+## Struttura
+
+- `index.html`, `styles.css` — interfaccia (stile Apple, tema chiaro/scuro).
+- `analytics.js` — calcoli puri (stagioni, gradi-giorno, stime, regressioni).
+- `charts.js` — grafici D3 in stile editoriale.
+- `app.js` — stato, persistenza, rendering delle viste, import/export.
+- `data.js` — dati iniziali di riserva per l'uso senza server (es. GitHub Pages).
+- `firebase-service.js` — sincronizzazione opzionale con Firestore (usata solo se il server locale non è disponibile).

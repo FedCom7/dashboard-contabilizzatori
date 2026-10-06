@@ -1,55 +1,95 @@
+// ==========================================
+// Firebase — copia cloud dei dati (Firestore) con accesso via email/password.
+// Le regole di sicurezza (firestore.rules) consentono l'accesso solo al proprietario.
+// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+    collection, getDocs, doc, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
-// Initialize Firebase
-let db = null;
+let db = null, auth = null, user = null;
+let resolveReady;
+const ready = new Promise(r => { resolveReady = r; });
+const listeners = new Set();
+
 try {
     const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log("Firebase initialized successfully");
+    // Cache locale persistente: le scritture fatte offline partono appena torna la rete
+    db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+    auth = getAuth(app);
+    onAuthStateChanged(auth, (u) => {
+        user = u;
+        resolveReady();
+        listeners.forEach(fn => fn(u));
+    });
 } catch (error) {
     console.error("Error initializing Firebase:", error);
+    resolveReady();
 }
 
-// Service object exposed globally
+// Ultimo stato noto del cloud, per scrivere solo ciò che è cambiato
+const known = { letture: new Map(), heating_periods: new Map() };
+const idOf = { letture: (r) => r.data, heating_periods: (p) => p.start };
+
+// Traduce gli errori Firestore/Auth in messaggi comprensibili
+const explain = (e) => {
+    const msg = String(e?.message || e);
+    if (/database.*does not exist|NOT_FOUND/i.test(msg) || e?.code === 'not-found') return 'Firestore database not created yet (Firebase console → Firestore Database → Create database).';
+    if (e?.code === 'permission-denied') return 'Permission denied: check the security rules and that your UID is in firestore.rules.';
+    if (e?.code === 'auth/invalid-credential' || e?.code === 'auth/wrong-password' || e?.code === 'auth/user-not-found') return 'Wrong email or password.';
+    if (e?.code === 'auth/operation-not-allowed' || e?.code === 'auth/configuration-not-found') return 'Email/password sign-in is not enabled (Firebase console → Authentication → Sign-in method).';
+    if (e?.code === 'auth/too-many-requests') return 'Too many attempts, try again in a few minutes.';
+    if (e?.code === 'unavailable') return 'Offline: changes will sync when the connection is back.';
+    return msg;
+};
+
+const fetchCollection = async (name) => {
+    const snap = await getDocs(collection(db, name));
+    known[name] = new Map(snap.docs.map(d => [d.id, JSON.stringify(d.data())]));
+    return snap.docs.map(d => d.data());
+};
+
+// Scrive solo i documenti nuovi/modificati e cancella quelli rimossi (batch da max 500 operazioni)
+const syncCollection = async (name, items) => {
+    const ops = [];
+    const next = new Map(items.map(it => [idOf[name](it), JSON.stringify(it)]));
+    next.forEach((json, id) => { if (known[name].get(id) !== json) ops.push({ type: 'set', id, data: JSON.parse(json) }); });
+    known[name].forEach((_, id) => { if (!next.has(id)) ops.push({ type: 'del', id }); });
+    for (let i = 0; i < ops.length; i += 450) {
+        const batch = writeBatch(db);
+        ops.slice(i, i + 450).forEach(op => {
+            const ref = doc(db, name, op.id);
+            if (op.type === 'set') batch.set(ref, op.data); else batch.delete(ref);
+        });
+        await batch.commit();
+    }
+    known[name] = next;
+    return ops.length;
+};
+
 window.FirebaseService = {
+    ready,
     isInitialized: () => !!db,
+    isSignedIn: () => !!user,
+    user: () => user ? { uid: user.uid, email: user.email } : null,
+    onAuthChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
+    explain,
 
-    // Letture
-    getLetture: async () => {
-        if (!db) throw new Error("Firebase not initialized");
-        const querySnapshot = await getDocs(collection(db, "letture"));
-        return querySnapshot.docs.map(doc => doc.data());
-    },
+    signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+    signOut: () => signOut(auth),
 
-    saveLettura: async (lettura) => {
-        if (!db) throw new Error("Firebase not initialized");
-        // Usa la data come ID del documento per evitare duplicati
-        await setDoc(doc(db, "letture", lettura.data), lettura);
-    },
+    getLetture: () => fetchCollection('letture'),
+    getHeatingPeriods: () => fetchCollection('heating_periods'),
 
-    deleteLettura: async (dateStr) => {
-        if (!db) throw new Error("Firebase not initialized");
-        await deleteDoc(doc(db, "letture", dateStr));
-    },
-
-    // Periodi Riscaldamento
-    getHeatingPeriods: async () => {
-        if (!db) throw new Error("Firebase not initialized");
-        const querySnapshot = await getDocs(collection(db, "heating_periods"));
-        if (querySnapshot.empty) return null;
-        return querySnapshot.docs.map(doc => doc.data());
-    },
-
-    saveHeatingPeriod: async (period) => {
-        if (!db) throw new Error("Firebase not initialized");
-        // Usa data inizio come ID
-        await setDoc(doc(db, "heating_periods", period.start), period);
-    },
-
-    deleteHeatingPeriod: async (startStr) => {
-        if (!db) throw new Error("Firebase not initialized");
-        await deleteDoc(doc(db, "heating_periods", startStr));
+    // Sincronizza lo stato completo: ritorna il numero di operazioni eseguite
+    sync: async (letture, periods) => {
+        const a = await syncCollection('letture', letture);
+        const b = await syncCollection('heating_periods', periods);
+        return a + b;
     }
 };

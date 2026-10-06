@@ -3,668 +3,454 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heating Meter Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <title>Heat Ledger</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Heat Ledger">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Applica il tema prima del primo paint (evita il lampo bianco in dark mode)
+        try {
+            const t = JSON.parse(localStorage.getItem('theme') || '"system"');
+            if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+        } catch (e) { }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
 
 <body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
+        <symbol id="i-seasons" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+        <symbol id="i-rooms" viewBox="0 0 24 24"><path d="M3.5 10.5 12 4l8.5 6.5V20a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5z"/><path d="M12 20.5v-6M3.5 14.5h17"/></symbol>
+        <symbol id="i-climate" viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></symbol>
+        <symbol id="i-readings" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/></symbol>
+        <symbol id="i-report" viewBox="0 0 24 24"><path d="M6 3.5h8.5L19 8v12a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 6 20z"/><path d="M14 3.5V8h5M9 12.5h7M9 16h7M9 9h2.5"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+        <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 21c-3.9 0-7-2.8-7-6.6 0-3.1 2-5.3 3.6-7 .4-.4 1.1-.1 1.1.5 0 1.4.9 2.6 2.1 2.6 1.1 0 1.8-.9 1.8-2 0-1.3-.6-2.6-1-3.6-.2-.5.3-1 .8-.8C16.8 5.6 19 9.4 19 14.4 19 18.2 15.9 21 12 21z"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    </svg>
+
     <div class="app">
-        <!-- Sidebar -->
-        <aside class="app-sidebar">
-            <div class="sidebar-logo">
-                <span class="sidebar-logo-dot"></span>
-                <span class="sidebar-logo-text">Home</span>
+        <!-- Sidebar (desktop) -->
+        <aside class="sidebar" aria-label="Main navigation">
+            <div class="brand">
+                <span class="brand-mark"><svg><use href="#i-flame"/></svg></span>
+                <span class="brand-name">Heat Ledger</span>
             </div>
-
-            <nav class="sidebar-nav">
-                <button class="nav-tab active" data-section="home">
-                    <span class="nav-tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 9.5 12 3l9 6.5"></path>
-                            <path d="M5 10v10h14V10"></path>
-                            <path d="M9 20v-6h6v6"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-tab-label">Home</span>
-                </button>
-                <button class="nav-tab" data-section="dashboard">
-                    <span class="nav-tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="7" height="9"></rect>
-                            <rect x="14" y="3" width="7" height="5"></rect>
-                            <rect x="14" y="12" width="7" height="9"></rect>
-                            <rect x="3" y="16" width="7" height="5"></rect>
-                        </svg>
-                    </span>
-                    <span class="nav-tab-label">Dashboard</span>
-                </button>
-                <button class="nav-tab" data-section="calendario">
-                    <span class="nav-tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                    </span>
-                    <span class="nav-tab-label">Calendar</span>
-                </button>
-                <button class="nav-tab" data-section="dettaglio">
-                    <span class="nav-tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
-                    </span>
-                    <span class="nav-tab-label">Details</span>
-                </button>
-                <button class="nav-tab" data-section="inserimento">
-                    <span class="nav-tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-tab-label">Entry</span>
-                </button>
+            <nav class="nav">
+                <button class="nav-item active" data-view="overview"><svg><use href="#i-overview"/></svg><span>Overview</span></button>
+                <button class="nav-item" data-view="seasons"><svg><use href="#i-seasons"/></svg><span>Seasons</span></button>
+                <button class="nav-item" data-view="rooms"><svg><use href="#i-rooms"/></svg><span>Rooms</span></button>
+                <button class="nav-item" data-view="climate"><svg><use href="#i-climate"/></svg><span>Climate</span></button>
+                <button class="nav-item" data-view="readings"><svg><use href="#i-readings"/></svg><span>Readings</span></button>
+                <button class="nav-item" data-view="report"><svg><use href="#i-report"/></svg><span>Report</span></button>
             </nav>
-
-            <div class="sidebar-bottom">
-                <div class="sidebar-status-card">
-                    <span class="sidebar-status-dot" id="sidebar-heating-dot"></span>
-                    <div class="sidebar-status-text">
-                        <strong id="sidebar-season-label">Season –</strong>
-                        <span id="sidebar-heating-label">Heating off</span>
-                    </div>
+            <div class="sidebar-foot">
+                <div class="status-pill" id="status-pill">
+                    <span class="status-dot"></span>
+                    <span class="status-text"><strong id="status-season">–</strong><span id="status-heating">–</span></span>
                 </div>
+                <button class="nav-item" id="btn-settings"><svg><use href="#i-gear"/></svg><span>Settings</span></button>
             </div>
         </aside>
 
-        <!-- Content -->
-        <div class="app-content">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar-welcome">
-                    <h1>Hello Federico</h1>
-                    <p id="topbar-date">Today is ...</p>
+        <main class="content">
+            <header class="page-head">
+                <div>
+                    <p class="eyebrow" id="today-label"></p>
+                    <h1 id="page-title">Overview</h1>
                 </div>
-
-                <div class="topbar-chips">
-                    <div class="topbar-chip">
-                        <span class="topbar-chip-value" id="chip-letture">0</span>
-                        <span class="topbar-chip-label">Readings</span>
-                    </div>
-                    <div class="topbar-chip">
-                        <span class="topbar-chip-value" id="chip-stagioni">0</span>
-                        <span class="topbar-chip-label">Seasons</span>
-                    </div>
-                    <div class="topbar-chip">
-                        <span class="topbar-chip-value" id="chip-giorni">0</span>
-                        <span class="topbar-chip-label">Heating days</span>
-                    </div>
-                </div>
-
-                <div class="topbar-actions">
-                    <button class="btn-icon-header" id="btn-import-topbar" title="Import data">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                    </button>
-                    <button class="btn-icon-header" id="btn-toggle-theme" title="Toggle theme">
-                        <span id="theme-icon"></span>
-                    </button>
-                    <button class="btn-icon-header" id="btn-settings" title="Settings">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                            </path>
-                        </svg>
-                    </button>
+                <div class="head-actions">
+                    <button class="icon-btn mobile-only" id="btn-settings-m" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+                    <button class="btn btn-primary" id="btn-new-reading"><svg><use href="#i-plus"/></svg><span>New reading</span></button>
                 </div>
             </header>
 
-            <!-- Main Content -->
-            <main class="main">
-            <!-- Home Section (mosaico bento) -->
-            <section id="home" class="section active">
-                <div class="home-bento">
-                    <div class="bento-block bento-b1"><span class="bento-num">1</span></div>
-                    <div class="bento-block bento-b2 nm-card">
-                        <div class="nm-header">
-                            <div class="nm-titlewrap">
-                                <h3 class="nm-title">Next Measure</h3>
-                                <span class="nm-sub" id="nm-sub">Prossima lettura</span>
-                            </div>
-                            <span class="nm-date-badge" id="nm-date-badge">–</span>
+            <!-- ============ OVERVIEW ============ -->
+            <section class="view active" id="view-overview">
+                <div class="notice" id="sync-notice" hidden></div>
+                <div class="hero-grid">
+                    <article class="card hero-card" id="hero-card"></article>
+                    <article class="card next-card" id="next-card"></article>
+                </div>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">The season race</p>
+                        <h2 class="headline" id="race-headline">–</h2>
+                        <p class="dek" id="race-dek">Cumulative heat units recorded since the start of each heating season.</p>
+                        <div class="key">
+                            <span class="key-item"><i class="key-line hero"></i><span id="race-key-latest">Latest season</span></span>
+                            <span class="key-item"><i class="key-line ctx"></i>Earlier seasons</span>
+                            <span class="key-item" id="race-key-proj" hidden><i class="key-line proj"></i>Projection</span>
                         </div>
-                        <div class="nm-body" id="nm-body"></div>
-                    </div>
-                    <div class="bento-block bento-b3"><span class="bento-num">3</span></div>
-                    <div class="bento-block bento-b4"><span class="bento-num">4</span></div>
-                    <div class="bento-block bento-b5"><span class="bento-num">5</span></div>
-                    <div class="bento-block bento-b6"><span class="bento-num">6</span></div>
-                    <div class="bento-block bento-b7"><span class="bento-num">7</span></div>
+                    </header>
+                    <div class="chart" id="chart-race"></div>
+                    <footer class="source">Source: heat cost allocator readings, summed across five rooms. Hover to compare seasons on the same date.</footer>
+                </article>
+
+                <div class="tiles" id="tiles"></div>
+
+                <div class="two-up">
+                    <article class="card chart-card">
+                        <header class="chart-head">
+                            <div class="chart-head-row">
+                                <p class="kicker">Season totals</p>
+                                <div class="segmented" id="seg-bars" role="tablist">
+                                    <button class="active" data-mode="measured">Measured</button>
+                                    <button data-mode="adjusted">Weather-adjusted</button>
+                                </div>
+                            </div>
+                            <h2 class="headline" id="bars-headline">–</h2>
+                        </header>
+                        <div class="chart" id="chart-bars"></div>
+                    </article>
+                    <article class="card chart-card">
+                        <header class="chart-head">
+                            <p class="kicker">Where the heat goes</p>
+                            <h2 class="headline" id="rooms-mini-headline">–</h2>
+                        </header>
+                        <div class="room-list" id="room-list"></div>
+                    </article>
                 </div>
             </section>
 
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="section">
-                <div class="dashboard-layout">
-                    <!-- Segnalibri verticali sul bordo scuro (destra della sidebar) -->
-                    <div class="chart-bookmarks">
-                        <button class="bookmark-btn active" data-chart-type="confronto-anni" title="Year Comparison">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="12" width="4" height="8" rx="1"></rect>
-                                <rect x="10" y="7" width="4" height="13" rx="1"></rect>
-                                <rect x="17" y="3" width="4" height="17" rx="1"></rect>
-                            </svg>
-                            <span class="bookmark-label">Year Comparison</span>
-                        </button>
-                        <button class="bookmark-btn" data-chart-type="andamento" title="Trend">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 17 9 11 13 15 21 7"></polyline>
-                                <polyline points="15 7 21 7 21 13"></polyline>
-                            </svg>
-                            <span class="bookmark-label">Trend</span>
-                        </button>
-                        <button class="bookmark-btn" data-chart-type="stanze" title="By Room">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                            </svg>
-                            <span class="bookmark-label">By Room</span>
-                        </button>
-                        <button class="bookmark-btn" data-chart-type="variazione" title="Variation">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="7 20 7 4 4 7"></polyline>
-                                <polyline points="10 7 7 4"></polyline>
-                                <polyline points="17 4 17 20 20 17"></polyline>
-                                <polyline points="14 17 17 20"></polyline>
-                            </svg>
-                            <span class="bookmark-label">Variation</span>
-                        </button>
-                        <button class="bookmark-btn" data-chart-type="clima" title="Climate">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0z"></path>
-                            </svg>
-                            <span class="bookmark-label">Climate</span>
-                        </button>
-                        <button class="bookmark-btn" data-chart-type="periodi" title="Periods">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="8" y1="6" x2="20" y2="6"></line>
-                                <line x1="4" y1="12" x2="15" y2="12"></line>
-                                <line x1="10" y1="18" x2="19" y2="18"></line>
-                            </svg>
-                            <span class="bookmark-label">Periods</span>
-                        </button>
-                    </div>
-                    <!-- Main Area -->
-                    <div class="main-area">
-                        <!-- Chart filter bar (controlli extra) -->
-                        <div class="chart-filter-bar">
-                            <div class="chart-filter-extra">
-                                <div id="clima-anno-selector" style="display: none;">
-                                    <select id="clima-anno-select" class="input-dark" style="padding: 8px 12px;"></select>
-                                </div>
-                                <button class="btn-link" id="btn-heating-history">Heating history</button>
-                            </div>
+            <!-- ============ SEASONS ============ -->
+            <section class="view" id="view-seasons">
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Weather or habits?</p>
+                        <h2 class="headline" id="db-headline">–</h2>
+                        <p class="dek">Each season’s total, rescaled as if it had been an average winter. Degree-days measure how cold it was: the sum, over heating days, of how far the daily mean temperature fell below 20 °C.</p>
+                        <div class="key">
+                            <span class="key-item"><i class="key-dot ring"></i>Measured</span>
+                            <span class="key-item"><i class="key-dot under"></i>Adjusted, below average</span>
+                            <span class="key-item"><i class="key-dot over"></i>Adjusted, above average</span>
                         </div>
+                    </header>
+                    <div class="chart" id="chart-dumbbell"></div>
+                    <footer class="source">Source: meter readings; daily temperatures from Open-Meteo for the configured location.</footer>
+                </article>
 
-                        <!-- Main Chart -->
-                        <div class="main-chart-container">
-                            <div class="chart-header">
-                                <div class="chart-title">
-                                    <h2>Consumption Trend</h2>
-                                    <span class="chart-subtitle" id="chart-periodo-label">Last 6 months</span>
-                                </div>
-                                <!-- Comparison/Estimate toggle -->
-                                <div id="chart-view-toggle" class="toggle-group" style="display: none;">
-                                    <button class="toggle-btn active" id="btn-view-confronto">Comparison</button>
-                                    <button class="toggle-btn" id="btn-view-stima">Daily Estimate</button>
-                                </div>
-                                <div class="chart-stats">
-                                    <div class="chart-stat">
-                                        <span class="chart-stat-value" id="stat-totale">0</span>
-                                        <span class="chart-stat-label">Total Consumption</span>
-                                    </div>
-                                    <div class="chart-stat">
-                                        <span class="chart-stat-value" id="stat-media">0</span>
-                                        <span class="chart-stat-label">Avg. Reading</span>
-                                    </div>
-                                    <div class="chart-stat">
-                                        <span class="chart-stat-value" id="stat-letture">0</span>
-                                        <span class="chart-stat-label">Readings</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="chart-main"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Bottom widgets -->
-                        <div class="bottom-widgets">
-                            <div class="widget" id="widget-1">
-                                <div class="widget-header">
-                                    <h4>Last Reading</h4>
-                                </div>
-                                <div class="widget-content">
-                                    <span class="widget-value" id="ultima-lettura-valore">-</span>
-                                    <span class="widget-label" id="ultima-lettura-data">-</span>
-                                </div>
-                            </div>
-                            <div class="widget" id="widget-2">
-                                <div class="widget-header">
-                                    <h4>Total Consumption</h4>
-                                </div>
-                                <div class="widget-content">
-                                    <span class="widget-value" id="consumo-anno-corrente">-</span>
-                                    <span class="widget-label" id="label-anno-corrente">current season</span>
-                                </div>
-                            </div>
-                            <div class="widget" id="widget-3">
-                                <div class="widget-header">
-                                    <h4>Heating Days</h4>
-                                </div>
-                                <div class="widget-content">
-                                    <span class="widget-value" id="giorni-riscaldamento">-</span>
-                                    <span class="widget-label" id="label-stagione">current season</span>
-                                </div>
-                            </div>
-                            <div class="widget" id="widget-4">
-                                <div class="widget-header">
-                                    <h4>Daily Average</h4>
-                                </div>
-                                <div class="widget-content">
-                                    <span class="widget-value" id="media-giornaliera">-</span>
-                                    <span class="widget-label">per day</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="two-up">
+                    <article class="card chart-card">
+                        <header class="chart-head">
+                            <p class="kicker">Cold vs. consumption</p>
+                            <h2 class="headline" id="hdd-headline">Colder winters, bigger totals</h2>
+                            <p class="dek">Seasons above the line used more than the cold alone would predict.</p>
+                        </header>
+                        <div class="chart" id="chart-hdd"></div>
+                    </article>
+                    <article class="card chart-card">
+                        <header class="chart-head">
+                            <p class="kicker">Heating calendar</p>
+                            <h2 class="headline" id="gantt-headline">When the heating was on</h2>
+                            <p class="dek">Bars show each heating period; dots mark meter readings.</p>
+                        </header>
+                        <div class="chart" id="chart-gantt"></div>
+                    </article>
                 </div>
+
+                <article class="card">
+                    <header class="chart-head">
+                        <p class="kicker">All seasons</p>
+                        <h2 class="headline">The numbers</h2>
+                    </header>
+                    <div class="table-wrap">
+                        <table class="data-table" id="season-table"></table>
+                    </div>
+                </article>
             </section>
 
-            <!-- Calendar Section -->
-            <section id="calendario" class="section">
-                <div class="main-area">
-                    <div class="main-chart-container">
-                        <div class="chart-header">
-                            <div class="chart-title">
-                                <h2>Calendar</h2>
-                                <span class="chart-subtitle">Readings logged per day</span>
-                            </div>
-                            <div id="calendario-controls" class="calendario-controls"></div>
-                        </div>
-                        <div class="chart-wrapper">
-                            <div id="calendario-container" class="calendario-container"></div>
-                        </div>
-                    </div>
-                </div>
+            <!-- ============ ROOMS ============ -->
+            <section class="view" id="view-rooms">
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Share of heat</p>
+                        <h2 class="headline" id="share-headline">–</h2>
+                        <p class="dek">Each room’s share of the season total.</p>
+                        <div class="key" id="room-key"></div>
+                    </header>
+                    <div class="chart" id="chart-share"></div>
+                </article>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Room by room</p>
+                        <h2 class="headline" id="multiples-headline">Totals per complete season</h2>
+                        <p class="dek" id="multiples-dek">Same scale in every panel. The coloured bar is the latest complete season.</p>
+                    </header>
+                    <div class="multiples" id="multiples"></div>
+                </article>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Room signatures</p>
+                        <h2 class="headline" id="room-sig-headline">–</h2>
+                        <p class="dek">How strongly each room reacts to the cold. Each dot is the interval between two readings: average outdoor temperature vs. that room’s heat per day. The line below each panel tracks the room’s sensitivity season by season.</p>
+                    </header>
+                    <div class="filter-row compact"><span class="filter-label">Highlight</span><div class="chips" id="room-sig-seasons"></div></div>
+                    <div class="sig-grid" id="room-sig-grid"></div>
+                    <footer class="source">Sensitivity = extra units per day for each 1 °C drop in outdoor temperature. “Off at” = the temperature where the fitted line reaches zero.</footer>
+                </article>
+
+                <article class="card">
+                    <header class="chart-head">
+                        <p class="kicker">What changed</p>
+                        <h2 class="headline">Notable shifts</h2>
+                    </header>
+                    <ul class="insights" id="room-insights"></ul>
+                </article>
             </section>
 
-            <!-- Details Section -->
-            <section id="dettaglio" class="section">
-                <div class="inserimento-fullwidth">
-                    <!-- Daily Estimate FIRST -->
-                    <div class="card card-fullwidth">
-                        <div class="card-header">
-                            <h3>Daily Consumption Estimate</h3>
-                            <div class="dettaglio-controls">
-                                <select id="dettaglio-anno-select" class="input-dark" style="padding: 8px 12px;">
-                                </select>
-                                <span class="badge" id="stima-info">Linear interpolation between readings</span>
-                            </div>
-                        </div>
-                        <div class="stima-content">
-                            <div class="stima-chart-container" style="height: 350px;">
-                                <canvas id="chart-stima"></canvas>
-                            </div>
-                            <div class="stima-stats" style="display: flex; gap: 20px; margin-top: 16px;">
-                                <div class="stat-card">
-                                    <span class="stat-label">Daily Average</span>
-                                    <span class="stat-value" id="stima-media">-</span>
-                                </div>
-                                <div class="stat-card">
-                                    <span class="stat-label">Peak Day</span>
-                                    <span class="stat-value" id="stima-max">-</span>
-                                </div>
-                                <div class="stat-card">
-                                    <span class="stat-label">Estimated Total</span>
-                                    <span class="stat-value" id="stima-totale">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Table SECOND -->
-                    <div class="card card-fullwidth" style="margin-top: 20px;">
-                        <div class="card-header">
-                            <h3>Reading Details</h3>
-                            <div class="toggle-group">
-                                <button class="toggle-btn active" id="btn-valori-assoluti">Absolute Values</button>
-                                <button class="toggle-btn" id="btn-differenze">Differences</button>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table class="letture-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Days</th>
-                                        <th>Kitchen</th>
-                                        <th>Living Room</th>
-                                        <th>Bedroom</th>
-                                        <th>Kids Room</th>
-                                        <th>Bathroom</th>
-                                        <th>Total</th>
-                                        <th>Avg/day</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dettaglio-table-body">
-                                </tbody>
-                                <tfoot id="dettaglio-table-footer">
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+            <!-- ============ CLIMATE ============ -->
+            <section class="view" id="view-climate">
+                <div class="filter-row">
+                    <span class="filter-label">Season</span>
+                    <div class="chips" id="climate-seasons"></div>
                 </div>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Heat follows the cold</p>
+                        <h2 class="headline" id="climate-headline">–</h2>
+                        <p class="dek">Use between two readings is spread across the days in between, weighted by how cold each day was.</p>
+                    </header>
+                    <div class="chart" id="chart-climate"></div>
+                    <footer class="source">Ticks under the bars mark meter readings. Temperatures: Open-Meteo historical archive.</footer>
+                </article>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Energy signature</p>
+                        <h2 class="headline" id="sig-headline">–</h2>
+                        <p class="dek">Each dot is the interval between two readings: average outdoor temperature vs. average heat used per day. The highlighted season is selected above.</p>
+                    </header>
+                    <div class="chart" id="chart-signature"></div>
+                </article>
+
+                <article class="card chart-card">
+                    <header class="chart-head">
+                        <p class="kicker">Day by day</p>
+                        <h2 class="headline" id="cal-headline">–</h2>
+                    </header>
+                    <div class="chart chart-scroll" id="chart-calendar"></div>
+                </article>
             </section>
 
-            <!-- Entry Section -->
-            <section id="inserimento" class="section">
-                <div class="inserimento-fullwidth">
-                    <!-- Scatter Plot with Heating Bands -->
-                    <div class="card card-fullwidth">
-                        <div class="card-header">
-                            <h3>Readings Trend</h3>
-                            <div id="scatter-season-badges" class="season-badges"></div>
+            <!-- ============ READINGS ============ -->
+            <section class="view" id="view-readings">
+                <article class="card">
+                    <header class="chart-head">
+                        <div class="chart-head-row">
+                            <div>
+                                <p class="kicker">Heating periods</p>
+                                <h2 class="headline">On and off dates</h2>
+                            </div>
+                            <button class="btn btn-secondary" id="btn-ics-periods"><svg><use href="#i-calendar"/></svg><span>Reading reminders</span></button>
                         </div>
-                        <div class="scatter-chart-container" style="height: 350px; position: relative;">
-                            <canvas id="chart-scatter-registro"></canvas>
-                        </div>
-                    </div>
+                        <p class="dek">Used to know which days the heating could consume, and to schedule readings.</p>
+                    </header>
+                    <form class="period-form" id="period-form">
+                        <label class="field"><span>Turned on</span><input type="date" id="period-start" required></label>
+                        <label class="field"><span>Turned off <em>(optional)</em></span><input type="date" id="period-end"></label>
+                        <button type="submit" class="btn btn-secondary">Add period</button>
+                    </form>
+                    <div class="period-list" id="period-list"></div>
+                </article>
 
-                    <!-- Heating Period Input -->
-                    <div class="card card-fullwidth" style="margin-top: 20px;">
-                        <div class="card-header">
-                            <h3>Heating Periods</h3>
-                            <div class="heating-input-form">
-                                <input type="date" id="heating-start-date" class="input-dark" title="Start date">
-                                <span style="color: var(--text-muted); padding: 0 8px;">→</span>
-                                <input type="date" id="heating-end-date" class="input-dark" title="End date">
-                                <button class="btn-primary" id="btn-add-heating-period">+ Add Period</button>
+                <article class="card">
+                    <header class="chart-head">
+                        <div class="chart-head-row">
+                            <div>
+                                <p class="kicker">Log</p>
+                                <h2 class="headline">All readings</h2>
+                            </div>
+                            <div class="segmented" id="seg-log">
+                                <button class="active" data-mode="meter">Meter</button>
+                                <button data-mode="delta">Change</button>
+                                <button data-mode="rate">Per day</button>
                             </div>
                         </div>
-                        <div class="heating-periods-list" id="heating-periods-list">
-                            <!-- Generated via JS -->
-                        </div>
+                    </header>
+                    <div class="filter-row compact">
+                        <div class="chips" id="log-seasons"></div>
                     </div>
-
-                    <!-- Readings Log -->
-                    <div class="card card-fullwidth" style="margin-top: 20px;">
-                        <div class="card-header">
-                            <h3>Readings Log</h3>
-                            <button class="btn-primary" id="btn-nuova-riga">+ New Reading</button>
-                        </div>
-                        <div class="table-wrapper-full">
-                            <table class="table-dark table-editable">
-                                <thead>
-                                    <tr>
-                                        <th class="heating-status-cell" title="Heating"></th>
-                                        <th class="col-stagione">Season</th>
-                                        <th class="col-data">Date</th>
-                                        <th class="col-durata">Duration</th>
-                                        <th class="col-temp">Ext.T</th>
-                                        <th class="col-stanza">Kitchen</th>
-                                        <th class="col-stanza">Living Room</th>
-                                        <th class="col-stanza">Bedroom</th>
-                                        <th class="col-stanza">Kids Room</th>
-                                        <th class="col-stanza">Bathroom</th>
-                                        <th class="col-tot">Tot</th>
-                                        <th class="col-parziali">Partials</th>
-                                        <th class="col-media">Avg</th>
-                                        <th class="col-actions"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabella-letture-body">
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="table-wrap">
+                        <table class="data-table log-table" id="log-table"></table>
                     </div>
-                </div>
+                </article>
             </section>
+            <!-- ============ REPORT ============ -->
+            <section class="view" id="view-report">
+                <div class="filter-row report-controls">
+                    <span class="filter-label">Season</span>
+                    <div class="chips" id="report-seasons"></div>
+                    <button class="btn btn-secondary" id="btn-print">Print / Save as PDF</button>
+                </div>
+                <article class="card report" id="report"></article>
+            </section>
+        </main>
 
-            </main>
-        </div>
-
-        <!-- Import Modal -->
-        <div id="modal-import" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Import</h2>
-                    <button class="btn-close" id="close-import">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="import-layout">
-                        <div class="card card-import">
-                            <div class="drop-zone" id="drop-zone">
-                                <div class="drop-content">
-                                    <div class="drop-icon">
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="1.5">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                            <polyline points="17 8 12 3 7 8"></polyline>
-                                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                                        </svg>
-                                    </div>
-                                    <p class="drop-text">Drag your CSV or Excel file here</p>
-                                    <p class="drop-hint">or</p>
-                                    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
-                                    <button class="btn-primary" id="btn-sfoglia">Browse Files</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card card-import-info">
-                            <h3>File Format</h3>
-                            <p>The file must contain the columns:</p>
-                            <div class="format-example">
-                                <code>data,cucina,soggiorno,camera,cameretta,bagno,stagione</code>
-                            </div>
-                            <ul class="format-list">
-                                <li><strong>data</strong> - DD/MM/YYYY or YYYY-MM-DD</li>
-                                <li><strong>cucina, soggiorno, camera, cameretta, bagno</strong> - meter values</li>
-                                <li><strong>stagione</strong> - e.g. 23/24, 24/25</li>
-                            </ul>
-                            <button class="btn-secondary btn-full" id="btn-scarica-template">Download Template</button>
-                        </div>
-                    </div>
-                    <div id="preview-import" class="card card-preview" style="display: none;">
-                        <div class="card-header">
-                            <h3>Import Preview</h3>
-                            <div class="preview-stats">
-                                <span class="badge" id="preview-righe">0 rows</span>
-                                <span class="badge" id="preview-contabilizzatori">0 meters</span>
-                            </div>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="table-dark" id="tabella-preview">
-                                <thead></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                        <div class="preview-actions">
-                            <button class="btn-primary" id="btn-conferma-import">Confirm Import</button>
-                            <button class="btn-secondary" id="btn-annulla-import">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Settings Modal -->
-        <div id="modal-settings" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Settings</h2>
-                    <button class="btn-close" id="close-settings">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="settings-section">
-                        <h4>Meter Management</h4>
-                        <div class="meters-list" id="lista-contabilizzatori">
-                        </div>
-                    </div>
-                    <div class="settings-section">
-                        <h4>Export Data</h4>
-                        <div class="btn-row">
-                            <button class="btn-secondary" id="btn-esporta-csv">Export CSV</button>
-                            <button class="btn-secondary" id="btn-esporta-json">Export JSON</button>
-                        </div>
-                    </div>
-                    <div class="settings-section">
-                        <h4>Weather Location</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
-                            Coordinates for Open-Meteo weather data
-                        </p>
-                        <div class="btn-row" style="gap: 12px; margin-bottom: 12px;">
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label>Latitude</label>
-                                <input type="number" id="setting-lat" class="input-dark" step="0.0001" value="45.5962">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label>Longitude</label>
-                                <input type="number" id="setting-lng" class="input-dark" step="0.0001" value="8.9167">
-                            </div>
-                        </div>
-                        <div class="btn-row">
-                            <button class="btn-secondary" id="btn-salva-posizione">Save Location</button>
-                            <button class="btn-secondary" id="btn-pulisci-cache-meteo">Clear Cache</button>
-                        </div>
-                    </div>
-                    <div class="settings-section">
-                        <h4>Cloud Sync</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
-                            Manually sync local data with Firebase
-                        </p>
-                        <button class="btn-primary btn-full" id="btn-sync-firebase">Sync now</button>
-                    </div>
-                    <div class="settings-section danger">
-                        <h4>Danger Zone</h4>
-                        <p>Delete all saved data</p>
-                        <button class="btn-danger" id="btn-elimina-tutti">Delete All Data</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- New Meter Modal -->
-        <div id="modal-contabilizzatore" class="modal">
-            <div class="modal-content modal-small">
-                <div class="modal-header">
-                    <h2>New Meter</h2>
-                    <button class="btn-close close-meter-modal">&times;</button>
-                </div>
-                <form id="form-nuovo-contabilizzatore">
-                    <div class="form-group">
-                        <label>Name/ID</label>
-                        <input type="text" id="nuovo-nome" class="input-dark" placeholder="E.g. Apartment 1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Type</label>
-                        <select id="nuovo-tipo" class="input-dark">
-                            <option value="calore">Heat</option>
-                            <option value="acqua-calda">Hot Water</option>
-                            <option value="acqua-fredda">Cold Water</option>
-                            <option value="gas">Gas</option>
-                            <option value="elettricita">Electricity</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unit</label>
-                        <input type="text" id="nuovo-unita" class="input-dark" placeholder="E.g. kWh, m³" value="kWh">
-                    </div>
-                    <div class="form-group">
-                        <label>Location</label>
-                        <input type="text" id="nuovo-ubicazione" class="input-dark" placeholder="E.g. Floor 2, Unit 5">
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary btn-full">Add</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <!-- Tab bar (mobile) -->
+        <nav class="tabbar" aria-label="Main navigation">
+            <button class="tab active" data-view="overview"><svg><use href="#i-overview"/></svg><span>Overview</span></button>
+            <button class="tab" data-view="seasons"><svg><use href="#i-seasons"/></svg><span>Seasons</span></button>
+            <button class="tab" data-view="rooms"><svg><use href="#i-rooms"/></svg><span>Rooms</span></button>
+            <button class="tab" data-view="climate"><svg><use href="#i-climate"/></svg><span>Climate</span></button>
+            <button class="tab" data-view="readings"><svg><use href="#i-readings"/></svg><span>Readings</span></button>
+            <button class="tab" data-view="report"><svg><use href="#i-report"/></svg><span>Report</span></button>
+        </nav>
     </div>
 
-    <!-- Heating History Modal -->
-    <div id="modal-heating" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Heating History</h2>
-                <button class="btn-close" id="close-heating">&times;</button>
+    <!-- ============ SHEET: New / edit reading ============ -->
+    <dialog class="sheet" id="sheet-reading">
+        <form method="dialog" class="sheet-body" id="reading-form">
+            <header class="sheet-head">
+                <button type="button" class="link-btn" data-close>Cancel</button>
+                <h2 id="reading-title">New reading</h2>
+                <button type="submit" class="link-btn strong" id="reading-save">Save</button>
+            </header>
+            <div class="form-group">
+                <label class="row-field"><span>Date</span><input type="date" id="reading-date" required></label>
+                <label class="row-field"><span>Season</span>
+                    <select id="reading-season"></select>
+                </label>
             </div>
-            <div class="modal-body">
-                <div class="heating-summary">
-                    <div class="heating-stat">
-                        <span class="heating-stat-value" id="heating-total-days">0</span>
-                        <span class="heating-stat-label">Total Days</span>
+            <p class="form-note" id="reading-prev-note"></p>
+            <div class="form-group" id="reading-rooms"></div>
+            <div class="form-total"><span>Season total</span><strong id="reading-total">0</strong><span class="muted" id="reading-total-delta"></span></div>
+            <ul class="form-warnings" id="reading-warnings"></ul>
+        </form>
+    </dialog>
+
+    <!-- ============ SHEET: Settings ============ -->
+    <dialog class="sheet" id="sheet-settings">
+        <div class="sheet-body">
+            <header class="sheet-head">
+                <span></span>
+                <h2>Settings</h2>
+                <button type="button" class="link-btn strong" data-close>Done</button>
+            </header>
+
+            <h3 class="group-title">Appearance</h3>
+            <div class="form-group">
+                <div class="row-field"><span>Theme</span>
+                    <div class="segmented small" id="seg-theme">
+                        <button data-theme="system">Auto</button>
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
                     </div>
-                    <div class="heating-stat">
-                        <span class="heating-stat-value" id="heating-periods">0</span>
-                        <span class="heating-stat-label">Periods</span>
-                    </div>
-                    <div class="heating-stat">
-                        <span class="heating-stat-value" id="heating-current-season">0</span>
-                        <span class="heating-stat-label">Current Season</span>
-                    </div>
-                </div>
-                <div class="heating-list-header">
-                    <h4>On/Off History</h4>
-                    <button class="btn-secondary btn-small" id="btn-add-heating-event">+ Add Event</button>
-                </div>
-                <div class="table-wrapper">
-                    <table class="table-dark">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Event</th>
-                                <th>Duration</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="heating-history-body">
-                        </tbody>
-                    </table>
                 </div>
             </div>
+
+            <h3 class="group-title">Cloud sync · Firebase</h3>
+            <div class="form-group" id="cloud-group">
+                <div class="row-field"><span>Status</span><span class="muted status-value" id="cloud-status">–</span></div>
+                <div id="cloud-signed-out">
+                    <label class="row-field"><span>Email</span><input type="email" id="cloud-email" autocomplete="username" placeholder="you@example.com"></label>
+                    <label class="row-field"><span>Password</span><input type="password" id="cloud-password" autocomplete="current-password" placeholder="••••••••"></label>
+                    <div class="row-field"><span class="muted" id="cloud-error"></span><button type="button" class="link-btn strong" id="btn-cloud-signin">Sign in</button></div>
+                </div>
+                <div id="cloud-signed-in" hidden>
+                    <div class="row-field"><span>Account</span><span class="muted" id="cloud-email-label">–</span></div>
+                    <div class="row-field"><span>UID</span><span class="uid"><code id="cloud-uid">–</code><button type="button" class="link-btn" id="btn-copy-uid">Copy</button></span></div>
+                    <div class="row-field"><button type="button" class="link-btn" id="btn-cloud-signout">Sign out</button><button type="button" class="link-btn strong" id="btn-cloud-sync">Sync now</button></div>
+                </div>
+            </div>
+            <details class="setup">
+                <summary>First-time setup (5 minutes, once)</summary>
+                <ol>
+                    <li>Open the <a href="https://console.firebase.google.com/project/dashboard-contabilizzatoti/firestore" target="_blank" rel="noopener">Firebase console → Firestore Database</a> and click <b>Create database</b>. Pick a European location (e.g. <code>eur3</code>) and <b>production mode</b>.</li>
+                    <li>In <b>Authentication → Sign-in method</b>, enable <b>Email/Password</b>. In <b>Users</b>, click <b>Add user</b> with your email and a password.</li>
+                    <li>In <b>Authentication → Settings → Authorized domains</b>, check that <code>fedcom7.github.io</code> is listed.</li>
+                    <li>Sign in here. Copy your <b>UID</b>, paste it into <code>firestore.rules</code> in place of <code>PASTE_YOUR_UID</code>, then paste the whole file into <b>Firestore → Rules</b> and publish.</li>
+                    <li>Press <b>Sync now</b>: your readings are uploaded and every device that signs in sees the same data.</li>
+                </ol>
+            </details>
+
+            <h3 class="group-title">On your phone</h3>
+            <div class="form-group">
+                <div class="phone-grid" id="phone-grid"></div>
+            </div>
+            <p class="form-note">Open the link on your phone, then <b>Share → Add to Home Screen</b> (iPhone) or <b>Install app</b> (Android). At home use the Wi-Fi address; anywhere else use the online version with Cloud sync.</p>
+
+            <h3 class="group-title">Weather location</h3>
+            <div class="form-group">
+                <label class="row-field"><span>Latitude</span><input type="number" id="setting-lat" step="0.0001"></label>
+                <label class="row-field"><span>Longitude</span><input type="number" id="setting-lng" step="0.0001"></label>
+                <div class="row-field"><span class="muted" id="weather-status">–</span><button type="button" class="link-btn" id="btn-weather-refresh">Save &amp; refresh</button></div>
+            </div>
+
+            <h3 class="group-title">Import</h3>
+            <div class="form-group">
+                <div class="drop-zone" id="drop-zone">
+                    <p><strong>Drop a CSV or Excel file</strong></p>
+                    <p class="muted">Columns: data, cucina, soggiorno, camera, cameretta, bagno, stagione</p>
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-secondary" id="btn-browse">Choose file…</button>
+                        <button type="button" class="link-btn" id="btn-template">Download template</button>
+                    </div>
+                    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
+                </div>
+                <div id="import-preview" hidden>
+                    <p class="form-note" id="import-summary"></p>
+                    <div class="table-wrap small"><table class="data-table" id="import-table"></table></div>
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-primary" id="btn-import-confirm">Import</button>
+                        <button type="button" class="btn btn-secondary" id="btn-import-cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="group-title">Export</h3>
+            <div class="form-group">
+                <div class="row-field"><span>Readings</span>
+                    <div class="btn-row">
+                        <button type="button" class="link-btn" id="btn-export-csv">CSV</button>
+                        <button type="button" class="link-btn" id="btn-export-json">JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="group-title">Local server &amp; backups</h3>
+            <div class="form-group">
+                <div class="row-field"><span>Local server</span><span class="muted status-value" id="server-status">–</span></div>
+                <div class="row-field"><span>Backups</span><span class="muted" id="backup-count">–</span></div>
+                <div id="backup-list" class="backup-list"></div>
+                <div class="row-field"><span>Full backup file</span><button type="button" class="link-btn" id="btn-export-all">Download</button></div>
+            </div>
+            <p class="form-note">The server keeps a dated copy of the data before every change (last 100, in the <code>backups/</code> folder).</p>
+
+            <h3 class="group-title">This browser</h3>
+            <div class="form-group">
+                <div class="row-field"><span class="danger-text">Reset browser cache</span><button type="button" class="link-btn danger-text" id="btn-reset-cache">Reset</button></div>
+            </div>
+            <p class="form-note">Clears this browser’s copy only. Data on the server and in the cloud is kept.</p>
         </div>
-    </div>
+    </dialog>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <!-- Firebase Integration -->
-    <script type="module" src="firebase-config.js"></script>
     <script type="module" src="firebase-service.js"></script>
-
     <script src="data.js"></script>
+    <script src="analytics.js"></script>
+    <script src="charts.js"></script>
     <script src="app.js"></script>
 </body>
 
