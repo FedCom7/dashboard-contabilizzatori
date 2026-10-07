@@ -2029,6 +2029,38 @@ tr:hover .row-actions {
     max-width: 180px;
 }
 
+.btn-google {
+    background: #fff;
+    color: #1f1f1f;
+    border: 1px solid #dadce0;
+    gap: 10px;
+    flex: none;
+}
+
+.btn-google:hover {
+    background: #f8f9fa;
+}
+
+.btn-google svg {
+    width: 18px;
+    height: 18px;
+    fill: initial;
+    stroke: none;
+}
+
+.btn-google:disabled {
+    opacity: 0.6;
+}
+
+details.email-fallback summary {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--link);
+    cursor: pointer;
+    border-top: 1px solid var(--sep);
+    list-style-position: inside;
+}
+
 #cloud-error {
     color: var(--danger);
     font-size: 13px;
@@ -2060,7 +2092,11 @@ details.setup a {
 
 .phone-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.phone-card:last-child {
+    border-bottom: 0;
 }
 
 .phone-card {

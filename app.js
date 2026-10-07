@@ -1060,6 +1060,17 @@ $('#btn-cloud-signin').addEventListener('click', async (e) => {
         $('#cloud-error').textContent = FS().explain(err);
     } finally { btn.textContent = 'Sign in'; }
 });
+$('#btn-cloud-google').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    $('#cloud-error').textContent = '';
+    try {
+        await FS().signInWithGoogle();
+        await reloadFromSources();
+    } catch (err) {
+        $('#cloud-error').textContent = FS().explain(err);
+    } finally { btn.disabled = false; }
+});
 $('#btn-cloud-signout').addEventListener('click', async () => {
     await FS().signOut();
     state.firebaseOK = false;

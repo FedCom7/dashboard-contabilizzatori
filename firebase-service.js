@@ -8,7 +8,8 @@ import {
     collection, getDocs, doc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
-    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
+    GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -42,7 +43,12 @@ const explain = (e) => {
     if (/database.*does not exist|NOT_FOUND/i.test(msg) || e?.code === 'not-found') return 'Firestore database not created yet (Firebase console → Firestore Database → Create database).';
     if (e?.code === 'permission-denied') return 'Permission denied: check the security rules and that your UID is in firestore.rules.';
     if (e?.code === 'auth/invalid-credential' || e?.code === 'auth/wrong-password' || e?.code === 'auth/user-not-found') return 'Wrong email or password.';
-    if (e?.code === 'auth/operation-not-allowed' || e?.code === 'auth/configuration-not-found') return 'Email/password sign-in is not enabled (Firebase console → Authentication → Sign-in method).';
+    if (e?.code === 'auth/configuration-not-found') return 'Authentication is not set up yet (Firebase console → Authentication → Get started).';
+    if (e?.code === 'auth/operation-not-allowed') return 'This sign-in method is not enabled (Firebase console → Authentication → Sign-in method).';
+    if (e?.code === 'auth/unauthorized-domain') return `This address (${location.hostname}) is not authorized (Firebase console → Authentication → Settings → Authorized domains).`;
+    if (e?.code === 'auth/popup-blocked') return 'The browser blocked the Google window: allow pop-ups for this site and try again.';
+    if (e?.code === 'auth/popup-closed-by-user' || e?.code === 'auth/cancelled-popup-request') return 'Sign-in cancelled.';
+    if (e?.code === 'auth/operation-not-supported-in-this-environment' || e?.code === 'auth/web-storage-unsupported') return 'Google sign-in is not available here (e.g. app on the home screen): open the site in the browser, or use email and password.';
     if (e?.code === 'auth/too-many-requests') return 'Too many attempts, try again in a few minutes.';
     if (e?.code === 'unavailable') return 'Offline: changes will sync when the connection is back.';
     return msg;
@@ -80,6 +86,11 @@ window.FirebaseService = {
     onAuthChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
     explain,
 
+    signInWithGoogle: () => {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        return signInWithPopup(auth, provider);
+    },
     signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
     signOut: () => signOut(auth),
 

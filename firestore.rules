@@ -1,11 +1,12 @@
 rules_version = '2';
 
-// Solo il proprietario (un unico account email/password) può leggere e scrivere.
-// Sostituisci PASTE_YOUR_UID con l'UID mostrato in Settings → Cloud sync dopo il primo accesso.
+// Solo il proprietario può leggere e scrivere.
+// Sostituisci PASTE_YOUR_UID con l'UID mostrato in Settings → Cloud sync dopo il primo accesso con Google.
+// Se un giorno usi anche l'accesso email/password (account distinto), aggiungi il suo UID alla lista.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == "PASTE_YOUR_UID";
+      allow read, write: if request.auth != null && request.auth.uid in ["PASTE_YOUR_UID"];
     }
   }
 }

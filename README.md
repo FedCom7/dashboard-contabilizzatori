@@ -31,10 +31,10 @@ Dashboard per registrare le letture dei contabilizzatori di calore di casa e con
 
 Configurazione una tantum nella console Firebase del progetto `dashboard-contabilizzatoti`:
 
-1. **Firestore Database → Create database** (posizione europea, production mode).
-2. **Authentication → Get started → Sign-in method → Email/Password**; poi **Users → Add user**.
-3. **Authentication → Settings → Authorized domains**: verificare `fedcom7.github.io`.
-4. Accedere da Settings → Cloud sync, copiare l'UID in `firestore.rules` al posto di `PASTE_YOUR_UID` e pubblicare le regole in **Firestore → Rules**.
+1. **Firestore Database → Create database** (posizione europea, production mode, piano gratuito Spark).
+2. **Authentication → Get started → Sign-in method → Google** (abilitare, scegliere l'email di supporto).
+3. **Authentication → Settings → Authorized domains**: aggiungere `fedcom7.github.io`.
+4. Accedere da Settings → Cloud sync con **Sign in with Google**, copiare l'UID in `firestore.rules` al posto di `PASTE_YOUR_UID` e pubblicare le regole in **Firestore → Rules**. (Email/password resta disponibile come alternativa, ad esempio se l'accesso Google non funziona nell'app installata sul telefono: in quel caso abilitare anche *Email/Password* e aggiungere il secondo UID alla lista nelle regole.)
 5. *Sync now*. Da quel momento, per chi ha fatto l'accesso, il cloud è la fonte principale e il server locale ne tiene una copia (con backup).
 
 ## Avvio locale
