@@ -229,7 +229,22 @@ svg {
     padding: 0 28px;
     display: flex;
     align-items: center;
-    gap: 28px;
+}
+
+/* Logo + sezioni come un unico gruppo centrato nella barra (stile apple.com).
+   Spacer a sinistra e azioni a destra si dividono lo spazio restante in parti
+   uguali: il gruppo centrale resta sempre a distanza di sicurezza dalle azioni,
+   invece di un centraggio assoluto che le ignora e può sovrapporsi a loro. */
+.topbar-spacer {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.topbar-center {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    flex: none;
 }
 
 .brand {
@@ -266,36 +281,47 @@ svg {
 .topnav {
     display: flex;
     align-items: center;
-    gap: 4px;
-    flex: 1;
+    gap: 22px;
 }
 
 .topnav-item {
-    padding: 8px 14px;
-    border-radius: 8px;
+    position: relative;
+    padding: 8px 1px;
     font-size: 13.5px;
     font-weight: 500;
     color: var(--ink-2);
     white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
+    transition: color 0.15s;
 }
 
 .topnav-item:hover {
     color: var(--ink);
-    background: var(--fill-2);
 }
 
 .topnav-item.active {
     color: var(--ink);
     font-weight: 600;
-    background: var(--fill);
+}
+
+.topnav-item.active::after {
+    content: "";
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    bottom: -9px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
 }
 
 .topbar-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 12px;
-    flex: none;
+    flex: 1 1 0;
+    /* niente min-width:0 qui: deve restare sempre alla sua larghezza naturale,
+       è lo spacer vuoto a cedere lo spazio per primo */
 }
 
 .status-pill {
@@ -2405,7 +2431,20 @@ details.setup a {
 @media (max-width: 860px) {
     .topbar-inner {
         padding: 0 16px;
-        gap: 10px;
+    }
+
+    /* Senza le sezioni di testo non c'è più nulla da centrare: il logo torna a sinistra,
+       le azioni a destra (niente spacer che lo spinga verso il centro) */
+    .topbar-spacer {
+        display: none;
+    }
+
+    .topbar-inner {
+        justify-content: space-between;
+    }
+
+    .topbar-actions {
+        flex: none;
     }
 
     .topnav {

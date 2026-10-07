@@ -51,18 +51,21 @@
         <!-- Top bar (Apple.com style): fixed, translucent, full width -->
         <header class="topbar">
             <div class="topbar-inner">
-                <button class="brand" data-view="overview" aria-label="Heat Ledger, go to Overview">
-                    <span class="brand-mark"><svg><use href="#i-flame"/></svg></span>
-                    <span class="brand-name">Heat Ledger</span>
-                </button>
-                <nav class="topnav" aria-label="Main navigation">
-                    <button class="topnav-item active" data-view="overview">Overview</button>
-                    <button class="topnav-item" data-view="seasons">Seasons</button>
-                    <button class="topnav-item" data-view="rooms">Rooms</button>
-                    <button class="topnav-item" data-view="climate">Climate</button>
-                    <button class="topnav-item" data-view="readings">Readings</button>
-                    <button class="topnav-item" data-view="report">Report</button>
-                </nav>
+                <div class="topbar-spacer" aria-hidden="true"></div>
+                <div class="topbar-center">
+                    <button class="brand" data-view="overview" aria-label="Heat Ledger, go to Overview">
+                        <span class="brand-mark"><svg><use href="#i-flame"/></svg></span>
+                        <span class="brand-name">Heat Ledger</span>
+                    </button>
+                    <nav class="topnav" aria-label="Main navigation">
+                        <button class="topnav-item active" data-view="overview">Overview</button>
+                        <button class="topnav-item" data-view="seasons">Seasons</button>
+                        <button class="topnav-item" data-view="rooms">Rooms</button>
+                        <button class="topnav-item" data-view="climate">Climate</button>
+                        <button class="topnav-item" data-view="readings">Readings</button>
+                        <button class="topnav-item" data-view="report">Report</button>
+                    </nav>
+                </div>
                 <div class="topbar-actions">
                     <div class="status-pill" id="status-pill">
                         <span class="status-dot"></span>
