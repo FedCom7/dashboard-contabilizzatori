@@ -48,28 +48,30 @@
     </svg>
 
     <div class="app">
-        <!-- Sidebar (desktop) -->
-        <aside class="sidebar" aria-label="Main navigation">
-            <div class="brand">
-                <span class="brand-mark"><svg><use href="#i-flame"/></svg></span>
-                <span class="brand-name">Heat Ledger</span>
-            </div>
-            <nav class="nav">
-                <button class="nav-item active" data-view="overview"><svg><use href="#i-overview"/></svg><span>Overview</span></button>
-                <button class="nav-item" data-view="seasons"><svg><use href="#i-seasons"/></svg><span>Seasons</span></button>
-                <button class="nav-item" data-view="rooms"><svg><use href="#i-rooms"/></svg><span>Rooms</span></button>
-                <button class="nav-item" data-view="climate"><svg><use href="#i-climate"/></svg><span>Climate</span></button>
-                <button class="nav-item" data-view="readings"><svg><use href="#i-readings"/></svg><span>Readings</span></button>
-                <button class="nav-item" data-view="report"><svg><use href="#i-report"/></svg><span>Report</span></button>
-            </nav>
-            <div class="sidebar-foot">
-                <div class="status-pill" id="status-pill">
-                    <span class="status-dot"></span>
-                    <span class="status-text"><strong id="status-season">–</strong><span id="status-heating">–</span></span>
+        <!-- Top bar (Apple.com style): fixed, translucent, full width -->
+        <header class="topbar">
+            <div class="topbar-inner">
+                <button class="brand" data-view="overview" aria-label="Heat Ledger, go to Overview">
+                    <span class="brand-mark"><svg><use href="#i-flame"/></svg></span>
+                    <span class="brand-name">Heat Ledger</span>
+                </button>
+                <nav class="topnav" aria-label="Main navigation">
+                    <button class="topnav-item active" data-view="overview">Overview</button>
+                    <button class="topnav-item" data-view="seasons">Seasons</button>
+                    <button class="topnav-item" data-view="rooms">Rooms</button>
+                    <button class="topnav-item" data-view="climate">Climate</button>
+                    <button class="topnav-item" data-view="readings">Readings</button>
+                    <button class="topnav-item" data-view="report">Report</button>
+                </nav>
+                <div class="topbar-actions">
+                    <div class="status-pill" id="status-pill">
+                        <span class="status-dot"></span>
+                        <span class="status-text"><strong id="status-season">–</strong><span id="status-heating">–</span></span>
+                    </div>
+                    <button class="icon-btn" id="btn-settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
                 </div>
-                <button class="nav-item" id="btn-settings"><svg><use href="#i-gear"/></svg><span>Settings</span></button>
             </div>
-        </aside>
+        </header>
 
         <main class="content">
             <header class="page-head">
@@ -78,7 +80,6 @@
                     <h1 id="page-title">Overview</h1>
                 </div>
                 <div class="head-actions">
-                    <button class="icon-btn mobile-only" id="btn-settings-m" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
                     <button class="btn btn-primary" id="btn-new-reading"><svg><use href="#i-plus"/></svg><span>New reading</span></button>
                 </div>
             </header>

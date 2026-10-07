@@ -56,7 +56,7 @@
 
     --radius: 22px;
     --radius-sm: 12px;
-    --sidebar-w: 236px;
+    --topbar-h: 60px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -204,31 +204,44 @@ svg {
     min-height: 100vh;
 }
 
-.sidebar {
+/* Barra in alto, stile Apple.com: fissa, traslucida, a tutta larghezza */
+.topbar {
     position: fixed;
-    inset: 0 auto 0 0;
-    width: var(--sidebar-w);
-    padding: 22px 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
+    inset: 0 0 auto 0;
+    height: var(--topbar-h);
     background: var(--sidebar);
     backdrop-filter: saturate(180%) blur(24px);
     -webkit-backdrop-filter: saturate(180%) blur(24px);
-    border-right: 1px solid var(--sep);
+    border-bottom: 1px solid transparent;
     z-index: 20;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.topbar.scrolled {
+    border-bottom-color: var(--sep);
+    box-shadow: 0 1px 14px rgba(0, 0, 0, 0.05);
+}
+
+.topbar-inner {
+    height: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 4px 10px;
+    gap: 9px;
+    flex: none;
 }
 
 .brand-mark {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
     display: grid;
     place-items: center;
@@ -237,39 +250,95 @@ svg {
 }
 
 .brand-mark svg {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
     fill: #fff;
 }
 
 .brand-name {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 17px;
+    font-size: 16px;
     letter-spacing: -0.02em;
+    white-space: nowrap;
 }
 
-.nav {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.nav-item {
+.topnav {
     display: flex;
     align-items: center;
-    gap: 11px;
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 9px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink);
-    text-align: left;
-    transition: background 0.15s;
+    gap: 4px;
+    flex: 1;
 }
 
-.nav-item svg,
+.topnav-item {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.topnav-item:hover {
+    color: var(--ink);
+    background: var(--fill-2);
+}
+
+.topnav-item.active {
+    color: var(--ink);
+    font-weight: 600;
+    background: var(--fill);
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+}
+
+.status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 980px;
+    background: var(--fill-2);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-3);
+    flex: none;
+}
+
+.status-pill.on .status-dot {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.status-text {
+    display: flex;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+
+.status-text strong {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.content {
+    padding: calc(var(--topbar-h) + 26px) 28px 64px;
+    max-width: 1320px;
+    margin: 0 auto;
+}
+
 .tab svg,
 .icon-btn svg,
 .btn svg {
@@ -281,73 +350,6 @@ svg {
     stroke-linecap: round;
     stroke-linejoin: round;
     flex: none;
-}
-
-.nav-item svg {
-    color: var(--accent);
-}
-
-.nav-item:hover {
-    background: var(--fill-2);
-}
-
-.nav-item.active {
-    background: var(--fill);
-    font-weight: 600;
-}
-
-.sidebar-foot {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.sidebar-foot .nav-item svg {
-    color: var(--ink-2);
-}
-
-.status-pill {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 12px;
-    border-radius: 14px;
-    background: var(--card);
-    box-shadow: var(--shadow);
-    border: 1px solid var(--sep);
-}
-
-.status-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--ink-3);
-    flex: none;
-}
-
-.status-pill.on .status-dot {
-    background: var(--accent);
-    box-shadow: 0 0 0 4px var(--accent-wash);
-}
-
-.status-text {
-    display: flex;
-    flex-direction: column;
-    font-size: 12px;
-    color: var(--ink-2);
-    line-height: 1.3;
-}
-
-.status-text strong {
-    color: var(--ink);
-    font-size: 13px;
-}
-
-.content {
-    margin-left: var(--sidebar-w);
-    padding: 34px 44px 64px;
-    max-width: calc(1180px + var(--sidebar-w));
 }
 
 .page-head {
@@ -400,8 +402,7 @@ h1 {
     }
 }
 
-.tabbar,
-.icon-btn.mobile-only {
+.tabbar {
     display: none;
 }
 
@@ -2340,7 +2341,7 @@ details.setup a {
         background: #fff;
     }
 
-    .sidebar,
+    .topbar,
     .tabbar,
     .head-actions,
     .page-head,
@@ -2402,21 +2403,29 @@ details.setup a {
 }
 
 @media (max-width: 860px) {
-    .sidebar {
+    .topbar-inner {
+        padding: 0 16px;
+        gap: 10px;
+    }
+
+    .topnav {
+        display: none;
+    }
+
+    .status-pill {
+        padding: 6px 8px;
+    }
+
+    .status-pill .status-text {
         display: none;
     }
 
     .content {
-        margin-left: 0;
-        padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
+        padding: calc(var(--topbar-h) + 18px) 16px calc(96px + env(safe-area-inset-bottom));
     }
 
     h1 {
         font-size: 32px;
-    }
-
-    .icon-btn.mobile-only {
-        display: grid;
     }
 
     .page-head {

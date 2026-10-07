@@ -183,6 +183,12 @@ const routeHash = () => {
 };
 window.addEventListener('hashchange', routeHash);
 
+// Barra in alto: ombra più marcata quando la pagina è scorsa (stile Apple.com)
+const topbarEl = $('.topbar');
+const onScroll = () => topbarEl?.classList.toggle('scrolled', window.scrollY > 2);
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
 // ==========================================
 // Header & stato riscaldamento
 // ==========================================
@@ -190,9 +196,12 @@ const renderHeader = () => {
     const t = A.today();
     $('#today-label').textContent = `${WEEKDAYS[t.getDay()]} ${t.getDate()} ${MONTHS_LONG[t.getMonth()]}`;
     const open = state.periods.find(A.isPeriodOpen);
+    const seasonText = `Season ${A.seasonOf(t)}`;
+    const heatingText = open ? `Heating on since ${dayMonth(open.start)}` : 'Heating off';
     $('#status-pill').classList.toggle('on', !!open);
-    $('#status-season').textContent = `Season ${A.seasonOf(t)}`;
-    $('#status-heating').textContent = open ? `Heating on since ${dayMonth(open.start)}` : 'Heating off';
+    $('#status-pill').title = `${seasonText} · ${heatingText}`; // leggibile anche quando il testo è nascosto (barra stretta)
+    $('#status-season').textContent = seasonText;
+    $('#status-heating').textContent = heatingText;
 };
 
 // ==========================================
@@ -1187,7 +1196,6 @@ const openSettings = () => {
     $('#sheet-settings').showModal();
 };
 $('#btn-settings').addEventListener('click', openSettings);
-$('#btn-settings-m').addEventListener('click', openSettings);
 
 $('#btn-weather-refresh').addEventListener('click', async (e) => {
     const lat = parseFloat($('#setting-lat').value), lng = parseFloat($('#setting-lng').value);
